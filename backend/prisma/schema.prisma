@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  STUDENT
+  COMPANY
+  ADMIN
+}
+
+enum JobModality {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  IN_REVIEW
+  INTERVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model User {
+  id           String          @id @default(uuid())
+  email        String          @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole        @default(STUDENT)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  profile      StudentProfile?
+  applications Application[]
+  savedJobs    SavedJob[]
+
+  @@map("users")
+}
+
+model StudentProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  university        String?
+  major             String?
+  semester          String?
+  phone             String?
+  location          String?
+  availability      String?
+  bio               String?
+  avatarInitials    String?
+  skills            String[] @default([])
+  profileCompletion Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  banner      String?
+  tagline     String?
+  description String
+  culture     String?
+  location    String?
+  size        String?
+  website     String?
+  industry    String?
+  foundedYear Int?
+  tags        String[] @default([])
+  benefits    String[] @default([])
+  gallery     String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  jobs        Job[]
+
+  @@map("companies")
+}
+
+model Job {
+  id                  String        @id @default(uuid())
+  companyId           String
+  slug                String        @unique
+  title               String
+  description         String
+  overview            String?
+  location            String
+  modality            JobModality
+  duration            String?
+  salaryLabel         String?
+  schedule            String?
+  startDate           String?
+  applicationDeadline DateTime?
+  openings            Int           @default(1)
+  applicantsCount     Int           @default(0)
+  featured            Boolean       @default(false)
+  tags                String[]      @default([])
+  responsibilities    String[]      @default([])
+  requirements        String[]      @default([])
+  benefits            String[]      @default([])
+  skills              String[]      @default([])
+  status              JobStatus     @default(OPEN)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  company             Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications        Application[]
+  savedBy             SavedJob[]
+
+  @@index([companyId])
+  @@index([location])
+  @@index([status])
+  @@map("jobs")
+}
+
+model Application {
+  id          String            @id @default(uuid())
+  userId      String
+  jobId       String
+  status      ApplicationStatus @default(SUBMITTED)
+  coverLetter String?
+  nextStep    String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([jobId])
+  @@map("applications")
+}
+
+model SavedJob {
+  id        String   @id @default(uuid())
+  userId    String
+  jobId     String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([jobId])
+  @@map("saved_jobs")
+}
