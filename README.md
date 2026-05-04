@@ -131,38 +131,6 @@ El seed crea un administrador de desarrollo:
 
 > Esta cuenta es solo para desarrollo. En produccion debe cambiarse o eliminarse.
 
-## Tests y validacion
-
-Actualmente no hay una suite automatizada con `npm test`. La validacion se realiza con builds, typecheck y pruebas manuales de API.
-
-**Backend**
-
-```bash
-cd backend
-npm run typecheck
-npm run build
-npm audit --omit=dev
-```
-
-**Frontend**
-
-```bash
-cd frontend
-npm run build
-```
-
-Flujos principales a comprobar:
-
-- Registro e inicio de sesion.
-- Listado y detalle de practicas.
-- Listado y detalle de empresas.
-- Guardar y quitar practicas.
-- Crear y retirar postulaciones.
-- Editar perfil de estudiante.
-- Acceder al panel admin.
-- Crear, editar y eliminar empresas desde admin.
-- Crear, editar y eliminar practicas desde admin.
-- Gestionar postulaciones desde admin.
 
 ## Funcionalidades
 
