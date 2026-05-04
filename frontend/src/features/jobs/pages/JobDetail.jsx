@@ -377,7 +377,7 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
         </div>
       </main>
 
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

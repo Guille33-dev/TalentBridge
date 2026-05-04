@@ -132,7 +132,7 @@ export function CompanyList({ onNavigate }) {
         </div>
       </main>
 
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

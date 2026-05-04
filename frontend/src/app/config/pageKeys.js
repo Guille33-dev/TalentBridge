@@ -1,5 +1,6 @@
 export const pageKeys = {
   home: 'home',
+  about: 'about',
   jobs: 'jobs',
   companies: 'companies',
   companyDetail: 'company-detail',

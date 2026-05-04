@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { FileText, Clock, XCircle, Calendar, } from "lucide-react";
+import { createPortal } from "react-dom";
+import { FileText, Clock, XCircle, Calendar, MessageCircle } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/shared/components/ui/tabs";
@@ -60,6 +61,7 @@ const getStatusColor = (statusType) => {
 };
 export function Applications({ onNavigate }) {
     const [applications, setApplications] = useState([]);
+    const [contactApplication, setContactApplication] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -98,6 +100,10 @@ export function Applications({ onNavigate }) {
 
     const handleViewApplication = (job) => {
         onNavigate?.("job-detail", job.slug || job.id);
+    };
+
+    const closeContactModal = () => {
+        setContactApplication(null);
     };
 
     const normalizedActiveApps = applications.filter((app) => statusTypes[app.status] !== "rejected");
@@ -167,7 +173,7 @@ export function Applications({ onNavigate }) {
                     <Button variant="outline" size="sm" onClick={() => handleViewApplication(app.job)}>
                       Ver Postulación
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => setContactApplication(app)}>
                       Contactar Reclutador
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleWithdraw(app.id)}>
@@ -210,5 +216,39 @@ export function Applications({ onNavigate }) {
             </div>))}
         </TabsContent>
       </Tabs>
+
+      {contactApplication && createPortal(
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 px-4" style={{ zIndex: 9999 }}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white border border-gray-200 shadow-xl p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg mb-1">Contacto con reclutador</h2>
+                <p className="text-sm text-gray-600">
+                  {contactApplication.job.company.name} revisará tu postulación y contactará contigo desde la plataforma si tu proceso avanza.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-lg bg-gray-50 p-4 text-sm text-gray-700 space-y-2">
+              <p><span className="text-gray-500">Práctica:</span> {contactApplication.job.title}</p>
+              <p><span className="text-gray-500">Estado:</span> {statusLabels[contactApplication.status] || contactApplication.status}</p>
+              {contactApplication.nextStep && <p><span className="text-gray-500">Siguiente paso:</span> {contactApplication.nextStep}</p>}
+            </div>
+
+            <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+              <Button type="button" variant="outline" onClick={closeContactModal}>
+                Cerrar
+              </Button>
+              <Button type="button" onClick={() => handleViewApplication(contactApplication.job)} className="bg-purple-600 hover:bg-purple-700 text-white">
+                Ver práctica
+              </Button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>);
 }

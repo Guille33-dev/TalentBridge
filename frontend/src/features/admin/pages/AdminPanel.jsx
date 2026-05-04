@@ -664,7 +664,7 @@ export function AdminPanel({ onNavigate }) {
         )}
 
         {pendingDelete && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 px-4" style={{ zIndex: 9999 }}>
             <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white border border-gray-200 shadow-xl p-5 sm:p-6">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">

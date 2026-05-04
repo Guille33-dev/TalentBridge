@@ -232,7 +232,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
         )}
       </main>
 
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

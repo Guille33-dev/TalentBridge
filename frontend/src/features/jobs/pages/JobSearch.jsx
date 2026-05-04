@@ -203,7 +203,7 @@ export function JobSearch({ onNavigate, initialFilters }) {
         </div>
       </main>
 
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

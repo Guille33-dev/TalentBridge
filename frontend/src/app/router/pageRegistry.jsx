@@ -8,11 +8,13 @@ import { AdminPanel } from '@/features/admin/pages/AdminPanel';
 import { JobDetail } from '@/features/jobs/pages/JobDetail';
 import { Login } from '@/features/auth/pages/Login';
 import { Signup } from '@/features/auth/pages/Signup';
+import { About } from '@/features/about/pages/About';
 import { pageKeys } from '@/app/config/pageKeys';
 
 export function getPageRegistry({ navigateTo, selectedCompanyId, selectedJobId, jobSearchFilters, previousPage, setCurrentPage, clearSharedJobUrl }) {
   return {
     [pageKeys.home]: <Home onNavigate={navigateTo} />,
+    [pageKeys.about]: <About onNavigate={navigateTo} />,
     [pageKeys.jobs]: <JobSearch onNavigate={navigateTo} initialFilters={jobSearchFilters} />,
     [pageKeys.companies]: <CompanyList onNavigate={navigateTo} />,
     [pageKeys.companyDetail]: <CompanyDetail companyId={selectedCompanyId} onNavigate={navigateTo} />,

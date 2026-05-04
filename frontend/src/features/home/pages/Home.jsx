@@ -12,6 +12,6 @@ export function Home({ onNavigate }) {
         <FeaturedCompanies onNavigate={onNavigate}/>
         <FeaturedJobs onNavigate={onNavigate}/>
       </main>
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>);
 }
