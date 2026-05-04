@@ -8,15 +8,32 @@ import { Search, MapPin, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
 
-export function JobSearch({ onNavigate }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [location, setLocation] = useState('');
-  const [activeFilters, setActiveFilters] = useState({ search: '', location: '', modality: '', area: '' });
+const emptyFilters = { search: '', location: '', modality: '', area: '' };
+
+function normalizeFilters(filters) {
+  return {
+    ...emptyFilters,
+    ...(filters || {}),
+  };
+}
+
+export function JobSearch({ onNavigate, initialFilters }) {
+  const initialSearchState = normalizeFilters(initialFilters);
+  const [searchQuery, setSearchQuery] = useState(initialSearchState.search);
+  const [location, setLocation] = useState(initialSearchState.location);
+  const [activeFilters, setActiveFilters] = useState(initialSearchState);
   const [showFilters, setShowFilters] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const nextFilters = normalizeFilters(initialFilters);
+    setSearchQuery(nextFilters.search);
+    setLocation(nextFilters.location);
+    setActiveFilters(nextFilters);
+  }, [initialFilters?.search, initialFilters?.location, initialFilters?.modality, initialFilters?.area]);
 
   useEffect(() => {
     let ignore = false;
@@ -80,7 +97,7 @@ export function JobSearch({ onNavigate }) {
   const clearFilters = () => {
     setSearchQuery('');
     setLocation('');
-    setActiveFilters({ search: '', location: '', modality: '', area: '' });
+    setActiveFilters(emptyFilters);
   };
 
   const handleSubmit = (event) => {

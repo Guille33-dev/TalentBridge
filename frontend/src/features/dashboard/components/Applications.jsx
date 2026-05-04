@@ -58,7 +58,7 @@ const getStatusColor = (statusType) => {
             return "bg-gray-100 text-gray-700";
     }
 };
-export function Applications() {
+export function Applications({ onNavigate }) {
     const [applications, setApplications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -94,6 +94,10 @@ export function Applications() {
         } catch (requestError) {
             setError(requestError.message);
         }
+    };
+
+    const handleViewApplication = (job) => {
+        onNavigate?.("job-detail", job.slug || job.id);
     };
 
     const normalizedActiveApps = applications.filter((app) => statusTypes[app.status] !== "rejected");
@@ -160,7 +164,7 @@ export function Applications() {
                     </div>)}
 
                   <div className="flex gap-3">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleViewApplication(app.job)}>
                       Ver Postulación
                     </Button>
                     <Button variant="outline" size="sm">

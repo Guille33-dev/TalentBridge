@@ -2,11 +2,33 @@ import React, { useState } from 'react';
 import { Search, MapPin } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+
+const popularSearches = [
+    { label: 'Producto', search: 'Producto' },
+    { label: 'Desarrollo', search: 'Desarrollo' },
+    { label: 'Diseño', search: 'Diseno' },
+    { label: 'DevOps', search: 'DevOps' },
+    { label: 'Cloud', search: 'Cloud' },
+];
+
 export function HeroSection({ onNavigate }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
     const handleSearch = () => {
-        onNavigate('jobs');
+        onNavigate('jobs', undefined, {
+            filters: {
+                search: searchQuery.trim(),
+                location: location.trim(),
+            },
+        });
+    };
+    const handlePopularSearch = (term) => {
+        onNavigate('jobs', undefined, {
+            filters: {
+                search: term.search,
+                location: location.trim(),
+            },
+        });
     };
     return (<section className="bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-600 text-white py-12 sm:py-16 md:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -36,8 +58,8 @@ export function HeroSection({ onNavigate }) {
           {/* Popular Searches */}
           <div className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-2 sm:gap-3 px-4">
             <span className="text-purple-100 text-xs sm:text-sm">Popular:</span>
-            {['Marketing', 'Desarrollo Web', 'Diseño', 'Finanzas', 'Recursos Humanos'].map((term) => (<button key={term} onClick={handleSearch} className="px-3 sm:px-4 py-1 sm:py-1.5 bg-white/10 hover:bg-white/20 rounded-full text-xs sm:text-sm transition-colors backdrop-blur-sm">
-                {term}
+            {popularSearches.map((term) => (<button key={term.search} onClick={() => handlePopularSearch(term)} className="px-3 sm:px-4 py-1 sm:py-1.5 bg-white/10 hover:bg-white/20 rounded-full text-xs sm:text-sm transition-colors backdrop-blur-sm">
+                {term.label}
               </button>))}
           </div>
         </div>

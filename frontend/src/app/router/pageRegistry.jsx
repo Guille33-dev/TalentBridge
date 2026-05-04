@@ -10,10 +10,10 @@ import { Login } from '@/features/auth/pages/Login';
 import { Signup } from '@/features/auth/pages/Signup';
 import { pageKeys } from '@/app/config/pageKeys';
 
-export function getPageRegistry({ navigateTo, selectedCompanyId, selectedJobId, previousPage, setCurrentPage, clearSharedJobUrl }) {
+export function getPageRegistry({ navigateTo, selectedCompanyId, selectedJobId, jobSearchFilters, previousPage, setCurrentPage, clearSharedJobUrl }) {
   return {
     [pageKeys.home]: <Home onNavigate={navigateTo} />,
-    [pageKeys.jobs]: <JobSearch onNavigate={navigateTo} />,
+    [pageKeys.jobs]: <JobSearch onNavigate={navigateTo} initialFilters={jobSearchFilters} />,
     [pageKeys.companies]: <CompanyList onNavigate={navigateTo} />,
     [pageKeys.companyDetail]: <CompanyDetail companyId={selectedCompanyId} onNavigate={navigateTo} />,
     [pageKeys.dashboard]: <Dashboard onNavigate={navigateTo} />,

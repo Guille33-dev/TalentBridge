@@ -23,15 +23,20 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState(initialSharedJobId ? pageKeys.jobDetail : defaultPage);
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
   const [selectedJobId, setSelectedJobId] = useState(initialSharedJobId);
+  const [jobSearchFilters, setJobSearchFilters] = useState(null);
   const [previousPage, setPreviousPage] = useState(pageKeys.jobs);
 
-  const navigateTo = (page, id) => {
+  const navigateTo = (page, id, options = {}) => {
     if (page === pageKeys.jobDetail) {
       setPreviousPage(currentPage);
       setSelectedJobId(id || null);
       updateSharedJobUrl(id || null);
     } else {
       updateSharedJobUrl(null);
+    }
+
+    if (page === pageKeys.jobs) {
+      setJobSearchFilters(options.filters || null);
     }
 
     if (page === pageKeys.companyDetail) {
@@ -45,6 +50,7 @@ export default function App() {
     navigateTo,
     selectedCompanyId,
     selectedJobId,
+    jobSearchFilters,
     previousPage,
     setCurrentPage,
     clearSharedJobUrl: () => updateSharedJobUrl(null),
