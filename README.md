@@ -17,8 +17,6 @@ Plataforma web para conectar estudiantes con empresas que ofrecen practicas prof
 - React 18 + Vite 6
 - JavaScript / JSX
 - Radix UI
-- lucide-react
-- CSS generado en `frontend/src/shared/styles/index.css`
 
 **Backend**
 
