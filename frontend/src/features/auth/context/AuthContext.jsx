@@ -36,16 +36,16 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = async ({ email, password }) => {
+  const login = async ({ email, password, rememberMe = false }) => {
     const result = await loginUser({ email, password });
-    setAuthToken(result.token);
+    setAuthToken(result.token, rememberMe);
     setUser(result.user);
     return result.user;
   };
 
   const register = async (formData) => {
     const result = await registerUser(formData);
-    setAuthToken(result.token);
+    setAuthToken(result.token, true);
     setUser(result.user);
     return result.user;
   };

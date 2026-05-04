@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Mail, Lock, Eye, EyeOff, User, GraduationCap, ArrowLeft } from 'lucide-react';
+import { Search, Mail, Lock, Eye, EyeOff, User, ArrowLeft } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Checkbox } from '@/shared/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { pageKeys } from '@/app/config/pageKeys';
 export function Signup({ onNavigate, onSwitchToLogin }) {
@@ -15,9 +14,6 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
         email: '',
         password: '',
         confirmPassword: '',
-        university: '',
-        major: '',
-        semester: ''
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -77,8 +73,8 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                 <span className="text-white">1</span>
               </div>
               <div>
-                <h3 className="text-lg mb-1">Crea tu perfil</h3>
-                <p className="text-purple-100">Completa tu información en minutos</p>
+                <h3 className="text-lg mb-1">Crea tu cuenta</h3>
+                <p className="text-purple-100">Tu perfil empieza vacío y lo completas cuando quieras</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -104,7 +100,7 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
           <div className="mt-12 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
             <p className="text-sm text-purple-100 mb-2">💡 Consejo</p>
             <p className="text-white">
-              Completa tu perfil al 100% para aumentar tus posibilidades de ser contactado por empresas.
+              Puedes completar tus estudios, habilidades y disponibilidad desde tu dashboard cuando quieras.
             </p>
           </div>
         </div>
@@ -169,58 +165,6 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
               </p>
             </div>
 
-            {/* Education Center */}
-            <div>
-              <Label htmlFor="university" className="mb-2 block text-sm sm:text-base">
-                Centro Educativo o Universidad
-              </Label>
-              <div className="relative">
-                <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400"/>
-                <Input id="university" type="text" placeholder="IES, centro educativo o universidad" value={formData.university} onChange={(e) => handleChange('university', e.target.value)} className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base" required/>
-              </div>
-            </div>
-
-            {/* Studies & Year */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <Label htmlFor="major" className="mb-2 block text-sm sm:text-base">
-                  Estudios
-                </Label>
-                <Select onValueChange={(value) => handleChange('major', value)}>
-                  <SelectTrigger className="h-11 sm:h-12 text-sm sm:text-base">
-                    <SelectValue placeholder="Selecciona"/>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dam">Desarrollo de Aplicaciones Multiplataforma</SelectItem>
-                    <SelectItem value="daw">Desarrollo de Aplicaciones Web</SelectItem>
-                    <SelectItem value="asir">Administración de Sistemas Informáticos en Red</SelectItem>
-                    <SelectItem value="marketing">Marketing y Publicidad</SelectItem>
-                    <SelectItem value="administracion">Administración y Finanzas</SelectItem>
-                    <SelectItem value="diseno">Diseño Gráfico</SelectItem>
-                    <SelectItem value="ingenieria">Ingeniería</SelectItem>
-                    <SelectItem value="otro">Otra</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="semester" className="mb-2 block text-sm sm:text-base">
-                  Año
-                </Label>
-                <Select onValueChange={(value) => handleChange('semester', value)}>
-                  <SelectTrigger className="h-11 sm:h-12 text-sm sm:text-base">
-                    <SelectValue placeholder="Selecciona"/>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1º año</SelectItem>
-                    <SelectItem value="2">2º año</SelectItem>
-                    <SelectItem value="3">3º año</SelectItem>
-                    <SelectItem value="4">4º año</SelectItem>
-                    <SelectItem value="egresado">Egresado/a</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             {/* Password */}
             <div>
               <Label htmlFor="password" className="mb-2 block text-sm sm:text-base">
@@ -251,7 +195,7 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
 
             {/* Terms */}
             <div className="flex items-start space-x-2">
-              <Checkbox id="terms" checked={acceptTerms} onCheckedChange={(checked) => setAcceptTerms(checked)} className="mt-1"/>
+              <Checkbox id="terms" checked={acceptTerms} onCheckedChange={(checked) => setAcceptTerms(Boolean(checked))} className="mt-1"/>
               <Label htmlFor="terms" className="text-xs sm:text-sm cursor-pointer leading-relaxed">
                 Acepto los{' '}
                 <a href="#" className="text-purple-600 hover:text-purple-700">

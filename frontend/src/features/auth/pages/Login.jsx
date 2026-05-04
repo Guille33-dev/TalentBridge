@@ -20,7 +20,7 @@ export function Login({ onNavigate, onSwitchToSignup }) {
         setError(null);
 
         try {
-            await login({ email, password });
+            await login({ email, password, rememberMe });
             const pendingJob = window.sessionStorage.getItem('talentbridge.pendingJob');
             if (pendingJob) {
                 window.sessionStorage.removeItem('talentbridge.pendingJob');
@@ -137,7 +137,7 @@ export function Login({ onNavigate, onSwitchToSignup }) {
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Checkbox id="remember" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked)}/>
+                <Checkbox id="remember" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(Boolean(checked))}/>
                 <Label htmlFor="remember" className="text-xs sm:text-sm cursor-pointer">
                   Recuérdame
                 </Label>

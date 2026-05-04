@@ -1,11 +1,10 @@
 import React from 'react';
-import { Home, Bookmark, FileText, User, Settings, TrendingUp } from 'lucide-react';
+import { Home, Bookmark, FileText, User } from 'lucide-react';
 const menuItems = [
     { id: 'home', label: 'Inicio', icon: Home },
     { id: 'saved', label: 'Prácticas Guardadas', icon: Bookmark },
     { id: 'applications', label: 'Mis Postulaciones', icon: FileText },
     { id: 'profile', label: 'Mi Perfil', icon: User },
-    { id: 'settings', label: 'Configuración', icon: Settings }
 ];
 export function DashboardSidebar({ currentView, onViewChange }) {
     return (<aside className="w-full h-full p-4 sm:p-6">
@@ -26,14 +25,5 @@ export function DashboardSidebar({ currentView, onViewChange }) {
         })}
       </nav>
 
-      {/* Quick Stats */}
-      <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl">
-        <div className="flex items-center gap-2 mb-2">
-          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0"/>
-          <span className="text-xs sm:text-sm text-gray-700">Vistas de Perfil</span>
-        </div>
-        <p className="text-xl sm:text-2xl text-purple-700">42</p>
-        <p className="text-xs text-gray-600 mt-1">+8% esta semana</p>
-      </div>
     </aside>);
 }

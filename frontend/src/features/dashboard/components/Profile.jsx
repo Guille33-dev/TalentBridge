@@ -8,9 +8,19 @@ import { Label } from '@/shared/components/ui/label';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { fetchMyProfile, updateMyProfile } from '@/features/profile/services/profileApi';
 
+function formatYear(value) {
+    if (!value) return 'Año no especificado';
+    if (value === 'egresado') return 'Egresado/a';
+    if (/^\d+$/.test(value)) return `${value}º año`;
+    return value;
+}
+
 export function Profile() {
     const [profileData, setProfileData] = useState(null);
     const [formData, setFormData] = useState({
+        university: '',
+        major: '',
+        semester: '',
         phone: '',
         location: '',
         availability: '',
@@ -26,6 +36,9 @@ export function Profile() {
     const syncForm = (data) => {
         const profile = data?.profile || {};
         setFormData({
+            university: profile.university || '',
+            major: profile.major || '',
+            semester: profile.semester || '',
             phone: profile.phone || '',
             location: profile.location || '',
             availability: profile.availability || '',
@@ -65,6 +78,11 @@ export function Profile() {
         setFormData((current) => ({ ...current, [field]: value }));
     };
 
+    const handleEdit = () => {
+        setIsEditing(true);
+        setSuccessMessage(null);
+    };
+
     const handleCancel = () => {
         syncForm(profileData);
         setIsEditing(false);
@@ -80,6 +98,9 @@ export function Profile() {
 
         try {
             const updatedProfile = await updateMyProfile({
+                university: formData.university,
+                major: formData.major,
+                semester: formData.semester,
                 phone: formData.phone,
                 location: formData.location,
                 availability: formData.availability,
@@ -109,7 +130,7 @@ export function Profile() {
     const fullName = `${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim();
     const initials = profile.avatarInitials || `${profileData?.firstName?.charAt(0) || ''}${profileData?.lastName?.charAt(0) || ''}`.toUpperCase() || 'TB';
     const completion = profile.profileCompletion || 0;
-    const skills = profile.skills?.length ? profile.skills : ['Añade tus habilidades'];
+    const skills = profile.skills?.length ? profile.skills : [];
 
     return (<div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -117,7 +138,7 @@ export function Profile() {
           <h1 className="text-3xl mb-2">Mi Perfil</h1>
           <p className="text-gray-600">Gestiona tu información personal y preferencias</p>
         </div>
-        <Button onClick={() => setIsEditing(true)} className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button onClick={handleEdit} className="bg-purple-600 hover:bg-purple-700 text-white">
           <Edit className="w-4 h-4 mr-2"/>
           Editar Perfil
         </Button>
@@ -135,7 +156,22 @@ export function Profile() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="profile-phone" className="mb-2 block">Telefono</Label>
+              <Label htmlFor="profile-university" className="mb-2 block">Centro Educativo o Universidad</Label>
+              <Input id="profile-university" value={formData.university} onChange={(event) => handleChange('university', event.target.value)} placeholder="IES, centro educativo o universidad" />
+            </div>
+            <div>
+              <Label htmlFor="profile-major" className="mb-2 block">Estudios</Label>
+              <Input id="profile-major" value={formData.major} onChange={(event) => handleChange('major', event.target.value)} placeholder="Desarrollo de Aplicaciones Web" />
+            </div>
+            <div>
+              <Label htmlFor="profile-semester" className="mb-2 block">Año</Label>
+              <Input id="profile-semester" value={formData.semester} onChange={(event) => handleChange('semester', event.target.value)} placeholder="2º año" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="profile-phone" className="mb-2 block">Teléfono</Label>
               <Input id="profile-phone" value={formData.phone} onChange={(event) => handleChange('phone', event.target.value)} placeholder="+34 600 000 000" />
             </div>
             <div>
@@ -178,7 +214,7 @@ export function Profile() {
         </div>
         <Progress value={completion} className="mb-4"/>
         <div className="flex flex-wrap gap-2">
-          <Badge variant={profileData?.email ? 'secondary' : 'outline'}>Información Básica</Badge>
+          <Badge variant={profile.phone || profile.location ? 'secondary' : 'outline'}>Información Básica</Badge>
           <Badge variant={profile.university ? 'secondary' : 'outline'}>Educación</Badge>
           <Badge variant={profile.skills?.length ? 'secondary' : 'outline'}>Habilidades</Badge>
           <Badge variant={profile.bio ? 'secondary' : 'outline'}>Bio</Badge>
@@ -190,7 +226,7 @@ export function Profile() {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl">Información Básica</h2>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
             <Edit className="w-4 h-4"/>
           </Button>
         </div>
@@ -201,10 +237,14 @@ export function Profile() {
           </div>
           <div className="flex-1">
             <h3 className="text-2xl mb-2">{fullName || 'Estudiante TalentBridge'}</h3>
-            <p className="text-gray-600 mb-4">{profile.major || 'Completa tu carrera'} {profile.university ? `· ${profile.university}` : ''}</p>
-            <div className="flex flex-wrap gap-2">
-              {skills.map((skill) => <Badge key={skill}>{skill}</Badge>)}
-            </div>
+            <p className="text-gray-600 mb-4">{profile.major || 'Completa tus estudios'} {profile.university ? `· ${profile.university}` : ''}</p>
+            {skills.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill) => <Badge key={skill}>{skill}</Badge>)}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Añade tus habilidades para completar tu perfil.</p>
+            )}
           </div>
         </div>
 
@@ -240,53 +280,11 @@ export function Profile() {
         </div>
       </div>
 
-      {/* Work Experience */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl">Experiencia (Opcional)</h2>
-          <Button variant="ghost" size="sm">
-            <Edit className="w-4 h-4"/>
-          </Button>
-        </div>
-
-        <div className="space-y-6">
-          <div className="flex gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Briefcase className="w-6 h-6 text-gray-600"/>
-            </div>
-            <div className="flex-1">
-              <h3 className="mb-1">Proyecto Personal - Aplicación Web</h3>
-              <p className="text-gray-600 mb-2">Desarrollo Independiente</p>
-              <p className="text-sm text-gray-500 mb-3">Ene 2024 - Presente</p>
-              <p className="text-gray-700">
-                Desarrollo de una aplicación web completa utilizando React, Node.js y MongoDB. 
-                Implementación de autenticación, diseño responsive y despliegue en producción.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Briefcase className="w-6 h-6 text-gray-600"/>
-            </div>
-            <div className="flex-1">
-              <h3 className="mb-1">Líder de Proyecto - Hackathon Universitario</h3>
-              <p className="text-gray-600 mb-2">Universidad Nacional</p>
-              <p className="text-sm text-gray-500 mb-3">Oct 2024</p>
-              <p className="text-gray-700">
-                Lideré un equipo de 4 personas para crear una solución tecnológica en 48 horas. 
-                Obtuvimos el segundo lugar entre 20 equipos participantes.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Education */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl">Educación</h2>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
             <Edit className="w-4 h-4"/>
           </Button>
         </div>
@@ -296,9 +294,9 @@ export function Profile() {
             <GraduationCap className="w-6 h-6 text-gray-600"/>
           </div>
           <div className="flex-1">
-            <h3 className="mb-1">{profile.major || 'Carrera no especificada'}</h3>
-            <p className="text-gray-600 mb-2">{profile.university || 'Universidad no especificada'}</p>
-            <p className="text-sm text-gray-500 mb-2">{profile.semester ? `${profile.semester} semestre` : 'Semestre no especificado'}</p>
+            <h3 className="mb-1">{profile.major || 'Estudios no especificados'}</h3>
+            <p className="text-gray-600 mb-2">{profile.university || 'Centro educativo o universidad no especificado'}</p>
+            <p className="text-sm text-gray-500 mb-2">{formatYear(profile.semester)}</p>
             <p className="text-sm text-gray-700">{profile.bio || 'Añade una bio para contar qué estás buscando.'}</p>
           </div>
         </div>
@@ -308,16 +306,20 @@ export function Profile() {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl">Habilidades</h2>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={handleEdit}>
             <Edit className="w-4 h-4"/>
           </Button>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {skills.map((skill) => (<Badge key={skill} variant="secondary" className="px-4 py-2">
+        {skills.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {skills.map((skill) => (<Badge key={skill} variant="secondary" className="px-4 py-2">
               {skill}
             </Badge>))}
-        </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-600">Todavía no has añadido habilidades.</p>
+        )}
       </div>
     </div>);
 }

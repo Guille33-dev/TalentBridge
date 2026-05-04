@@ -15,15 +15,6 @@ const viewComponents = {
   profile: Profile,
 };
 
-function SettingsView() {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
-      <h2 className="text-xl sm:text-2xl mb-4">Configuración</h2>
-      <p className="text-gray-600 text-sm sm:text-base">Página de configuración próximamente...</p>
-    </div>
-  );
-}
-
 export function Dashboard({ onNavigate }) {
   const [currentView, setCurrentView] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -86,11 +77,7 @@ export function Dashboard({ onNavigate }) {
         </div>
 
         <main className="flex-1 p-4 sm:p-6 md:p-8 min-w-0">
-          {currentView === 'settings' ? (
-            <SettingsView />
-          ) : (
-            <CurrentView onNavigate={onNavigate} onViewChange={handleViewChange} />
-          )}
+          <CurrentView onNavigate={onNavigate} onViewChange={handleViewChange} />
         </main>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Building2, BriefcaseBusiness, ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, BarChart3, Building2, BriefcaseBusiness, ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Header } from '@/shared/components/layout/Header';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
@@ -133,6 +133,7 @@ export function AdminPanel({ onNavigate }) {
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   const isAdmin = user?.role === 'ADMIN';
 
@@ -274,6 +275,40 @@ export function AdminPanel({ onNavigate }) {
     } finally {
       setIsBusy(false);
     }
+  };
+
+  const requestDeleteCompany = (company) => {
+    setPendingDelete({
+      type: 'company',
+      id: company.id,
+      title: 'Eliminar empresa',
+      description: `Vas a eliminar "${company.name}". Esta acción puede afectar a sus prácticas asociadas.`,
+      confirmLabel: 'Eliminar empresa',
+    });
+  };
+
+  const requestDeleteJob = (job) => {
+    setPendingDelete({
+      type: 'job',
+      id: job.id,
+      title: 'Eliminar práctica',
+      description: `Vas a eliminar "${job.title}". Esta acción no se puede deshacer desde el panel.`,
+      confirmLabel: 'Eliminar práctica',
+    });
+  };
+
+  const confirmPendingDelete = async () => {
+    const item = pendingDelete;
+    if (!item) return;
+
+    setPendingDelete(null);
+
+    if (item.type === 'company') {
+      await removeCompany(item.id);
+      return;
+    }
+
+    await removeJob(item.id);
   };
 
   const editCompany = (company) => {
@@ -439,7 +474,7 @@ export function AdminPanel({ onNavigate }) {
                             <Button type="button" variant="outline" size="sm" onClick={() => editCompany(company)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => removeCompany(company.id)}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => requestDeleteCompany(company)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -548,7 +583,7 @@ export function AdminPanel({ onNavigate }) {
                             <Button type="button" variant="outline" size="sm" onClick={() => editJob(job)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => removeJob(job.id)}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => requestDeleteJob(job)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -626,6 +661,31 @@ export function AdminPanel({ onNavigate }) {
               </table>
             </div>
           </section>
+        )}
+
+        {pendingDelete && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+            <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white border border-gray-200 shadow-xl p-5 sm:p-6">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg mb-2">{pendingDelete.title}</h2>
+                  <p className="text-sm text-gray-600">{pendingDelete.description}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setPendingDelete(null)} disabled={isBusy}>
+                  Cancelar
+                </Button>
+                <Button type="button" onClick={confirmPendingDelete} disabled={isBusy} className="bg-red-600 hover:bg-red-700 text-white">
+                  {isBusy ? 'Eliminando...' : pendingDelete.confirmLabel}
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>

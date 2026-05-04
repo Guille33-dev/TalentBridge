@@ -266,6 +266,6 @@ VITE_API_URL=https://tu-backend.vercel.app/api/v1
 
 ## Autor
 
-**Guillermo**
+**Guillermo José Suárez López**
 
 2º Desarrollo de Aplicaciones Web

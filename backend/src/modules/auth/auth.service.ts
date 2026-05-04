@@ -9,9 +9,6 @@ type RegisterBody = {
   password?: unknown;
   firstName?: unknown;
   lastName?: unknown;
-  university?: unknown;
-  major?: unknown;
-  semester?: unknown;
 };
 
 type LoginBody = {
@@ -47,13 +44,6 @@ function getRequiredString(value: unknown, field: string) {
   }
 
   return trimmed;
-}
-
-function getOptionalString(value: unknown) {
-  if (typeof value !== 'string') return undefined;
-
-  const trimmed = value.trim();
-  return trimmed || undefined;
 }
 
 function normalizeEmail(value: unknown) {
@@ -105,9 +95,6 @@ export async function registerStudent(body: RegisterBody) {
   const password = validatePassword(body.password);
   const firstName = getRequiredString(body.firstName, 'firstName');
   const lastName = getRequiredString(body.lastName, 'lastName');
-  const university = getOptionalString(body.university);
-  const major = getOptionalString(body.major);
-  const semester = getOptionalString(body.semester);
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -129,11 +116,8 @@ export async function registerStudent(body: RegisterBody) {
       role: UserRole.STUDENT,
       profile: {
         create: {
-          university,
-          major,
-          semester,
           avatarInitials: buildInitials(firstName, lastName),
-          profileCompletion: 40,
+          profileCompletion: 0,
         },
       },
     },
