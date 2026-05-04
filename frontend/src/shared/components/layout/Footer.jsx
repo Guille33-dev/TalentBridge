@@ -104,9 +104,9 @@ export function Footer({ onNavigate }) {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm">© 2026 TalentBridge. Todos los derechos reservados.</p>
             <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <span>Política de Privacidad</span>
-              <span>Términos de Servicio</span>
-              <span>Cookies</span>
+              <FooterButton onClick={() => navigate('privacy')}>Política de Privacidad</FooterButton>
+              <FooterButton onClick={() => navigate('terms')}>Términos de Servicio</FooterButton>
+              <FooterButton onClick={() => navigate('cookies')}>Cookies</FooterButton>
             </div>
           </div>
         </div>

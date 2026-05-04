@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { defaultPage, pageKeys } from '@/app/config/pageKeys';
 import { getPageRegistry } from '@/app/router/pageRegistry';
+import { CookieConsent } from '@/features/legal/components/CookieConsent';
 
 function getInitialSharedJobId() {
   return new URLSearchParams(window.location.search).get('job');
@@ -56,5 +57,10 @@ export default function App() {
     clearSharedJobUrl: () => updateSharedJobUrl(null),
   });
 
-  return <div className="min-h-screen bg-gray-50">{pages[currentPage] ?? pages[defaultPage]}</div>;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {pages[currentPage] ?? pages[defaultPage]}
+      <CookieConsent />
+    </div>
+  );
 }

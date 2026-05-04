@@ -49,6 +49,10 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
+    const navigateToLegalPage = (page) => {
+        onNavigate(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
     return (<div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-600 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         {/* Left Side - Branding */}
@@ -196,16 +200,16 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
             {/* Terms */}
             <div className="flex items-start space-x-2">
               <Checkbox id="terms" checked={acceptTerms} onCheckedChange={(checked) => setAcceptTerms(Boolean(checked))} className="mt-1"/>
-              <Label htmlFor="terms" className="text-xs sm:text-sm cursor-pointer leading-relaxed">
+              <p className="text-xs sm:text-sm leading-relaxed">
                 Acepto los{' '}
-                <a href="#" className="text-purple-600 hover:text-purple-700">
+                <button type="button" onClick={() => navigateToLegalPage(pageKeys.terms)} className="text-purple-600 hover:text-purple-700">
                   Términos y Condiciones
-                </a>{' '}
+                </button>{' '}
                 y la{' '}
-                <a href="#" className="text-purple-600 hover:text-purple-700">
+                <button type="button" onClick={() => navigateToLegalPage(pageKeys.privacy)} className="text-purple-600 hover:text-purple-700">
                   Política de Privacidad
-                </a>
-              </Label>
+                </button>
+              </p>
             </div>
 
             {/* Submit Button */}

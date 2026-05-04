@@ -9,6 +9,9 @@ import { JobDetail } from '@/features/jobs/pages/JobDetail';
 import { Login } from '@/features/auth/pages/Login';
 import { Signup } from '@/features/auth/pages/Signup';
 import { About } from '@/features/about/pages/About';
+import { PrivacyPolicy } from '@/features/legal/pages/PrivacyPolicy';
+import { TermsOfService } from '@/features/legal/pages/TermsOfService';
+import { CookiePolicy } from '@/features/legal/pages/CookiePolicy';
 import { pageKeys } from '@/app/config/pageKeys';
 
 export function getPageRegistry({ navigateTo, selectedCompanyId, selectedJobId, jobSearchFilters, previousPage, setCurrentPage, clearSharedJobUrl }) {
@@ -32,5 +35,8 @@ export function getPageRegistry({ navigateTo, selectedCompanyId, selectedJobId, 
     ),
     [pageKeys.login]: <Login onNavigate={navigateTo} onSwitchToSignup={() => navigateTo(pageKeys.signup)} />,
     [pageKeys.signup]: <Signup onNavigate={navigateTo} onSwitchToLogin={() => navigateTo(pageKeys.login)} />,
+    [pageKeys.privacy]: <PrivacyPolicy onNavigate={navigateTo} />,
+    [pageKeys.terms]: <TermsOfService onNavigate={navigateTo} />,
+    [pageKeys.cookies]: <CookiePolicy onNavigate={navigateTo} />,
   };
 }

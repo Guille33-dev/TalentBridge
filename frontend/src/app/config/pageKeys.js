@@ -9,6 +9,9 @@ export const pageKeys = {
   jobDetail: 'job-detail',
   login: 'login',
   signup: 'signup',
+  privacy: 'privacy',
+  terms: 'terms',
+  cookies: 'cookies',
 };
 
 export const defaultPage = pageKeys.home;
