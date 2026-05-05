@@ -3,14 +3,13 @@ import { Header } from '@/shared/components/layout/Header';
 import { Footer } from '@/shared/components/layout/Footer';
 import { JobCard } from '@/shared/components/cards/JobCard';
 import { fetchCompany } from '@/features/companies/services/companiesApi';
-import { MapPin, Users, Globe, Bookmark, ChevronRight } from 'lucide-react';
+import { MapPin, Users, Globe, ChevronRight } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { ImageWithFallback } from '@/shared/components/media/ImageWithFallback';
 
 export function CompanyDetail({ companyId, onNavigate }) {
   const [companyData, setCompanyData] = useState(null);
-  const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,7 +25,6 @@ export function CompanyDetail({ companyId, onNavigate }) {
 
       setIsLoading(true);
       setError(null);
-      setIsFollowing(false);
 
       try {
         const company = await fetchCompany(companyId);
@@ -53,6 +51,18 @@ export function CompanyDetail({ companyId, onNavigate }) {
   }, [companyId]);
 
   const jobs = companyData?.jobs || [];
+  const companyFilterId = companyData?.slug || companyData?.id;
+
+  const handleViewCompanyJobs = () => {
+    if (!companyData || !companyFilterId) return;
+
+    onNavigate('jobs', null, {
+      filters: {
+        company: companyFilterId,
+        companyName: companyData.name,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -80,33 +90,25 @@ export function CompanyDetail({ companyId, onNavigate }) {
 
         {!isLoading && companyData && (
           <>
-            <div className="h-64 bg-gradient-to-br from-blue-600 to-teal-600 overflow-hidden">
-              <ImageWithFallback src={companyData.banner} alt="Company banner" className="w-full h-full object-cover opacity-50" />
-            </div>
-
             <div className="bg-white border-b border-gray-200">
               <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                <div className="flex flex-col lg:flex-row lg:items-end gap-4 sm:gap-6 -mt-16 pb-6">
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 bg-white rounded-xl border-4 border-white shadow-lg overflow-hidden flex-shrink-0">
-                    <ImageWithFallback src={companyData.logo} alt={companyData.name} className="w-full h-full object-cover" />
-                  </div>
-
-                  <div className="flex-1 lg:mt-16">
+                <div className="flex items-start justify-between gap-4 sm:gap-6 pt-6 sm:pt-8 pb-6">
+                  <div className="min-w-0 flex-1 pt-2 sm:pt-3">
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                      <div>
+                      <div className="max-w-3xl">
                         <h1 className="text-2xl sm:text-3xl mb-2">{companyData.name}</h1>
                         <p className="text-base sm:text-lg text-gray-600 mb-4">{companyData.tagline}</p>
                         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                           <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4" />
-                            {companyData.location || 'Ubicación no especificada'}
+                            {companyData.location || 'Ubicacion no especificada'}
                           </div>
                           <div className="flex items-center gap-2">
                             <Users className="w-4 h-4" />
                             {companyData.size || 'Tamano no especificado'}
                           </div>
                           {companyData.website && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 break-all">
                               <Globe className="w-4 h-4" />
                               {companyData.website}
                             </div>
@@ -115,13 +117,15 @@ export function CompanyDetail({ companyId, onNavigate }) {
                       </div>
 
                       <div className="flex gap-3">
-                        <Button variant="outline" onClick={() => setIsFollowing(!isFollowing)} className={isFollowing ? 'bg-purple-50 text-purple-700 border-purple-600' : ''}>
-                          <Bookmark className={`w-4 h-4 mr-2 ${isFollowing ? 'fill-current' : ''}`} />
-                          {isFollowing ? 'Siguiendo' : 'Seguir'}
+                        <Button onClick={handleViewCompanyJobs} className="bg-purple-600 hover:bg-purple-700 text-white">
+                          Ver practicas
                         </Button>
-                        <Button className="bg-purple-600 hover:bg-purple-700 text-white">Ver prácticas</Button>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-xl border-4 border-white shadow-lg overflow-hidden flex-shrink-0">
+                    <ImageWithFallback src={companyData.logo} alt={companyData.name} className="w-full h-full object-cover" />
                   </div>
                 </div>
               </div>
@@ -158,7 +162,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
                     <TabsContent value="culture" className="space-y-6">
                       <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
                         <h2 className="text-xl sm:text-2xl mb-4">Nuestra cultura</h2>
-                        <p className="text-gray-700 leading-relaxed mb-6">{companyData.culture || 'Información no disponible todavía.'}</p>
+                        <p className="text-gray-700 leading-relaxed mb-6">{companyData.culture || 'Informacion no disponible todavia.'}</p>
 
                         {!!companyData.gallery?.length && (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -196,7 +200,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
                       {jobs.length > 0 ? (
                         jobs.map((job) => <JobCard key={job.id} job={job} onViewDetails={(jobId) => onNavigate('job-detail', jobId)} />)
                       ) : (
-                        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-600">Esta empresa no tiene prácticas abiertas ahora mismo.</div>
+                        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-600">Esta empresa no tiene practicas abiertas ahora mismo.</div>
                       )}
                     </TabsContent>
                   </Tabs>
@@ -218,11 +222,11 @@ export function CompanyDetail({ companyId, onNavigate }) {
                           </button>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-600">No hay prácticas abiertas.</p>
+                        <p className="text-sm text-gray-600">No hay practicas abiertas.</p>
                       )}
                     </div>
                     <Button onClick={() => onNavigate('jobs')} className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white">
-                      Ver todas las prácticas
+                      Ver todas las practicas
                     </Button>
                   </div>
                 </div>

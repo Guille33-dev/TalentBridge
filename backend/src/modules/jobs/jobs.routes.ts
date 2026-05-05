@@ -12,6 +12,7 @@ jobsRouter.get(
       search: getStringQuery(req.query.search),
       location: getStringQuery(req.query.location),
       modality: getStringQuery(req.query.modality),
+      company: getStringQuery(req.query.company),
       featured: getStringQuery(req.query.featured),
       page: getNumberQuery(req.query.page, 1, { min: 1 }),
       limit: getNumberQuery(req.query.limit, 20, { min: 1, max: 100 }),

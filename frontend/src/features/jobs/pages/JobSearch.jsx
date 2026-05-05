@@ -4,11 +4,13 @@ import { Footer } from '@/shared/components/layout/Footer';
 import { JobCard } from '@/shared/components/cards/JobCard';
 import { SearchFilters } from '@/features/jobs/components/SearchFilters';
 import { fetchJobs } from '@/features/jobs/services/jobsApi';
+import { deleteSavedJob, fetchMySavedJobs, saveJob } from '@/features/savedJobs/services/savedJobsApi';
 import { Search, MapPin, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
+import { getAuthToken } from '@/shared/services/apiClient';
 
-const emptyFilters = { search: '', location: '', modality: '', area: '' };
+const emptyFilters = { search: '', location: '', modality: '', area: '', company: '', companyName: '' };
 
 function normalizeFilters(filters) {
   return {
@@ -27,13 +29,15 @@ export function JobSearch({ onNavigate, initialFilters }) {
   const [pagination, setPagination] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [savedJobIds, setSavedJobIds] = useState([]);
+  const [savingJobId, setSavingJobId] = useState(null);
 
   useEffect(() => {
     const nextFilters = normalizeFilters(initialFilters);
     setSearchQuery(nextFilters.search);
     setLocation(nextFilters.location);
     setActiveFilters(nextFilters);
-  }, [initialFilters?.search, initialFilters?.location, initialFilters?.modality, initialFilters?.area]);
+  }, [initialFilters?.search, initialFilters?.location, initialFilters?.modality, initialFilters?.area, initialFilters?.company, initialFilters?.companyName]);
 
   useEffect(() => {
     let ignore = false;
@@ -47,6 +51,7 @@ export function JobSearch({ onNavigate, initialFilters }) {
           search: activeFilters.search,
           location: activeFilters.location,
           modality: activeFilters.modality,
+          company: activeFilters.company,
           limit: 20,
         });
 
@@ -74,6 +79,40 @@ export function JobSearch({ onNavigate, initialFilters }) {
     };
   }, [activeFilters]);
 
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadSavedJobs() {
+      if (!getAuthToken()) {
+        if (!ignore) setSavedJobIds([]);
+        return;
+      }
+
+      try {
+        const savedJobs = await fetchMySavedJobs();
+        if (!ignore) {
+          setSavedJobIds(savedJobs.map(({ job }) => job.id));
+        }
+      } catch {
+        if (!ignore) {
+          setSavedJobIds([]);
+        }
+      }
+    }
+
+    const handleWindowFocus = () => {
+      loadSavedJobs();
+    };
+
+    loadSavedJobs();
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      ignore = true;
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, []);
+
   const handleSearch = () => {
     setActiveFilters({
       ...activeFilters,
@@ -98,6 +137,35 @@ export function JobSearch({ onNavigate, initialFilters }) {
     setSearchQuery('');
     setLocation('');
     setActiveFilters(emptyFilters);
+  };
+
+  const handleToggleSave = async (job) => {
+    if (!getAuthToken()) {
+      window.sessionStorage.setItem('talentbridge.pendingJob', job.slug || job.id);
+      onNavigate('login');
+      return;
+    }
+
+    setSavingJobId(job.id);
+    setError(null);
+
+    try {
+      if (savedJobIds.includes(job.id)) {
+        await deleteSavedJob(job.slug || job.id);
+        setSavedJobIds((current) => current.filter((savedJobId) => savedJobId !== job.id));
+      } else {
+        await saveJob(job.slug || job.id);
+        setSavedJobIds((current) => [...current, job.id]);
+      }
+    } catch (requestError) {
+      if (requestError.message.includes('already saved') || requestError.message.includes('ya esta guardada')) {
+        setSavedJobIds((current) => (current.includes(job.id) ? current : [...current, job.id]));
+      } else {
+        setError(requestError.message);
+      }
+    } finally {
+      setSavingJobId(null);
+    }
   };
 
   const handleSubmit = (event) => {
@@ -155,7 +223,11 @@ export function JobSearch({ onNavigate, initialFilters }) {
                     {isLoading ? 'Buscando prácticas...' : `${pagination?.total ?? jobs.length} prácticas encontradas`}
                   </h1>
                   <p className="text-gray-600 text-sm sm:text-base">
-                    {activeFilters.search || activeFilters.location || activeFilters.modality ? 'Mostrando resultados filtrados' : 'Mostrando todos los resultados'}
+                    {activeFilters.companyName
+                      ? `Mostrando practicas de ${activeFilters.companyName}`
+                      : activeFilters.search || activeFilters.location || activeFilters.modality
+                        ? 'Mostrando resultados filtrados'
+                        : 'Mostrando todos los resultados'}
                   </p>
                 </div>
                 <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="gap-2 text-sm sm:text-base h-10 sm:h-auto">
@@ -189,7 +261,14 @@ export function JobSearch({ onNavigate, initialFilters }) {
               ) : jobs.length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
                   {jobs.map((job) => (
-                    <JobCard key={job.id} job={job} onViewDetails={(jobId) => onNavigate('job-detail', jobId)} />
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      isSaved={savedJobIds.includes(job.id)}
+                      isSaveDisabled={savingJobId === job.id}
+                      onToggleSave={handleToggleSave}
+                      onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
+                    />
                   ))}
                 </div>
               ) : (

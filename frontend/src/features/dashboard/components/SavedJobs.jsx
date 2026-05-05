@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { JobCard } from '@/shared/components/cards/JobCard';
 import { Search } from 'lucide-react';
 import { Input } from '@/shared/components/ui/input';
-import { fetchMySavedJobs } from '@/features/savedJobs/services/savedJobsApi';
+import { deleteSavedJob, fetchMySavedJobs } from '@/features/savedJobs/services/savedJobsApi';
 
 export function SavedJobs({ onNavigate }) {
     const [savedJobs, setSavedJobs] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [savingJobId, setSavingJobId] = useState(null);
 
     useEffect(() => {
         let ignore = false;
@@ -43,6 +44,20 @@ export function SavedJobs({ onNavigate }) {
         );
     }, [savedJobs, searchQuery]);
 
+    const handleToggleSave = async (job) => {
+        setSavingJobId(job.id);
+        setError(null);
+
+        try {
+            await deleteSavedJob(job.slug || job.id);
+            setSavedJobs((current) => current.filter((savedJob) => savedJob.job.id !== job.id));
+        } catch (requestError) {
+            setError(requestError.message);
+        } finally {
+            setSavingJobId(null);
+        }
+    };
+
     return (<div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -66,7 +81,16 @@ export function SavedJobs({ onNavigate }) {
         <div className="bg-white rounded-xl border border-gray-200 p-6">Cargando prácticas guardadas...</div>
       ) : filteredJobs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredJobs.map(({ id, job }) => (<JobCard key={id} job={job} onViewDetails={(jobId) => onNavigate('job-detail', jobId)}/>))}
+          {filteredJobs.map(({ id, job }) => (
+            <JobCard
+              key={id}
+              job={job}
+              isSaved
+              isSaveDisabled={savingJobId === job.id}
+              onToggleSave={handleToggleSave}
+              onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
+            />
+          ))}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-gray-600">No hay prácticas guardadas.</div>

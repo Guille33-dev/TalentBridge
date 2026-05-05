@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MapPin, Briefcase, DollarSign, Bookmark, Star } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ImageWithFallback } from '../media/ImageWithFallback';
-export function JobCard({ job, onViewDetails }) {
-    const [isSaved, setIsSaved] = useState(false);
+export function JobCard({ job, onViewDetails, isSaved = false, onToggleSave, isSaveDisabled = false }) {
     const handleViewDetails = () => {
         if (onViewDetails) {
             onViewDetails(job.slug || job.id);
         }
+    };
+    const handleToggleSave = (event) => {
+        event.stopPropagation();
+        onToggleSave?.(job);
     };
     return (<div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow group relative">
       {job.featured && (<div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs px-3 py-1 rounded-bl-lg rounded-tr-xl flex items-center gap-1">
@@ -31,9 +34,15 @@ export function JobCard({ job, onViewDetails }) {
         </div>
 
         {/* Save Button */}
-        <button onClick={() => setIsSaved(!isSaved)} className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isSaved
+        <button
+          type="button"
+          onClick={handleToggleSave}
+          disabled={isSaveDisabled || !onToggleSave}
+          aria-pressed={isSaved}
+          className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isSaved
             ? 'bg-purple-50 text-purple-600'
-            : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>
+            : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+        >
           <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`}/>
         </button>
       </div>

@@ -6,6 +6,7 @@ type ListJobsParams = {
   search?: string;
   location?: string;
   modality?: string;
+  company?: string;
   featured?: string;
   page: number;
   limit: number;
@@ -120,6 +121,12 @@ export async function listJobs(params: ListJobsParams) {
 
   if (params.location) {
     where.location = { contains: params.location, mode: 'insensitive' };
+  }
+
+  if (params.company) {
+    where.company = {
+      OR: [{ id: params.company }, { slug: params.company }],
+    };
   }
 
   const modality = parseModality(params.modality);

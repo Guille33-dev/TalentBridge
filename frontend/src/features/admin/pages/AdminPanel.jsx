@@ -25,7 +25,7 @@ import {
 const tabs = [
   { id: 'summary', label: 'Resumen', icon: BarChart3 },
   { id: 'companies', label: 'Empresas', icon: Building2 },
-  { id: 'jobs', label: 'Prácticas', icon: BriefcaseBusiness },
+  { id: 'jobs', label: 'Practicas', icon: BriefcaseBusiness },
   { id: 'applications', label: 'Postulaciones', icon: ClipboardList },
 ];
 
@@ -35,14 +35,17 @@ const emptyCompanyForm = {
   slug: '',
   description: '',
   tagline: '',
+  culture: '',
   location: '',
   size: '',
   website: '',
   industry: '',
+  foundedYear: '',
   logo: '',
   banner: '',
   tags: '',
   benefits: '',
+  gallery: '',
 };
 
 const emptyJobForm = {
@@ -74,7 +77,7 @@ const statusLabels = {
   OPEN: 'Abierta',
   CLOSED: 'Cerrada',
   SUBMITTED: 'Enviada',
-  IN_REVIEW: 'En revisión',
+  IN_REVIEW: 'En revision',
   INTERVIEW: 'Entrevista',
   ACCEPTED: 'Aceptada',
   REJECTED: 'Rechazada',
@@ -214,10 +217,10 @@ export function AdminPanel({ onNavigate }) {
     try {
       if (jobForm.id) {
         await updateAdminJob(jobForm.id, jobForm);
-        setSuccess('Práctica actualizada.');
+        setSuccess('Practica actualizada.');
       } else {
         await createAdminJob(jobForm);
-        setSuccess('Práctica creada.');
+        setSuccess('Practica creada.');
       }
 
       setJobForm(emptyJobForm);
@@ -252,7 +255,7 @@ export function AdminPanel({ onNavigate }) {
 
     try {
       await deleteAdminJob(jobId);
-      setSuccess('Práctica eliminada.');
+      setSuccess('Practica eliminada.');
       await loadAdminData();
     } catch (requestError) {
       setError(requestError.message);
@@ -268,7 +271,7 @@ export function AdminPanel({ onNavigate }) {
 
     try {
       await updateAdminApplication(applicationId, applicationDrafts[applicationId]);
-      setSuccess('Postulación actualizada.');
+      setSuccess('Postulacion actualizada.');
       await loadAdminData();
     } catch (requestError) {
       setError(requestError.message);
@@ -282,7 +285,7 @@ export function AdminPanel({ onNavigate }) {
       type: 'company',
       id: company.id,
       title: 'Eliminar empresa',
-      description: `Vas a eliminar "${company.name}". Esta acción puede afectar a sus prácticas asociadas.`,
+      description: `Vas a eliminar "${company.name}". Esta accion puede afectar a sus practicas asociadas.`,
       confirmLabel: 'Eliminar empresa',
     });
   };
@@ -291,9 +294,9 @@ export function AdminPanel({ onNavigate }) {
     setPendingDelete({
       type: 'job',
       id: job.id,
-      title: 'Eliminar práctica',
-      description: `Vas a eliminar "${job.title}". Esta acción no se puede deshacer desde el panel.`,
-      confirmLabel: 'Eliminar práctica',
+      title: 'Eliminar practica',
+      description: `Vas a eliminar "${job.title}". Esta accion no se puede deshacer desde el panel.`,
+      confirmLabel: 'Eliminar practica',
     });
   };
 
@@ -319,14 +322,17 @@ export function AdminPanel({ onNavigate }) {
       slug: company.slug || '',
       description: company.description || '',
       tagline: company.tagline || '',
+      culture: company.culture || '',
       location: company.location || '',
       size: company.size || '',
       website: company.website || '',
       industry: company.industry || '',
+      foundedYear: company.foundedYear ? String(company.foundedYear) : '',
       logo: company.logo || '',
       banner: company.banner || '',
       tags: toCsv(company.tags),
       benefits: toCsv(company.benefits),
+      gallery: toCsv(company.gallery),
     });
   };
 
@@ -361,7 +367,7 @@ export function AdminPanel({ onNavigate }) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header onNavigate={onNavigate} currentPage="admin" />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 text-gray-600">Cargando sesión...</main>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 text-gray-600">Cargando sesion...</main>
       </div>
     );
   }
@@ -375,7 +381,7 @@ export function AdminPanel({ onNavigate }) {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
             <h1 className="text-2xl mb-2">Acceso restringido</h1>
-            <p className="text-gray-600">Tu usuario no tiene permisos de administración.</p>
+            <p className="text-gray-600">Tu usuario no tiene permisos de administracion.</p>
           </div>
         </main>
       </div>
@@ -389,8 +395,8 @@ export function AdminPanel({ onNavigate }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl mb-1">Panel de administración</h1>
-            <p className="text-gray-600 text-sm">Gestión de empresas, prácticas y postulaciones.</p>
+            <h1 className="text-2xl sm:text-3xl mb-1">Panel de administracion</h1>
+            <p className="text-gray-600 text-sm">Gestion de empresas, practicas y postulaciones.</p>
           </div>
           <AdminTabs activeTab={activeTab} onChange={setActiveTab} />
         </div>
@@ -402,7 +408,7 @@ export function AdminPanel({ onNavigate }) {
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               ['Empresas', summary?.companies ?? 0],
-              ['Prácticas', summary?.jobs?.total ?? 0],
+              ['Practicas', summary?.jobs?.total ?? 0],
               ['Abiertas', summary?.jobs?.open ?? 0],
               ['Postulaciones', summary?.applications ?? 0],
             ].map(([label, value]) => (
@@ -430,19 +436,55 @@ export function AdminPanel({ onNavigate }) {
               <Field id="company-slug" label="Slug">
                 <Input id="company-slug" value={companyForm.slug} onChange={(event) => handleCompanyChange('slug', event.target.value)} />
               </Field>
-              <Field id="company-description" label="Descripción">
+              <Field id="company-description" label="Descripcion">
                 <Textarea id="company-description" required value={companyForm.description} onChange={(event) => handleCompanyChange('description', event.target.value)} />
               </Field>
+              <Field id="company-tagline" label="Tagline">
+                <Input id="company-tagline" value={companyForm.tagline} onChange={(event) => handleCompanyChange('tagline', event.target.value)} />
+              </Field>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="company-location" label="Ubicación">
+                <Field id="company-location" label="Ubicacion">
                   <Input id="company-location" value={companyForm.location} onChange={(event) => handleCompanyChange('location', event.target.value)} />
                 </Field>
                 <Field id="company-industry" label="Industria">
                   <Input id="company-industry" value={companyForm.industry} onChange={(event) => handleCompanyChange('industry', event.target.value)} />
                 </Field>
               </div>
-              <Field id="company-tags" label="Tags">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field id="company-size" label="Tamano">
+                  <Input id="company-size" value={companyForm.size} onChange={(event) => handleCompanyChange('size', event.target.value)} />
+                </Field>
+                <Field id="company-foundedYear" label="Ano de fundacion">
+                  <Input
+                    id="company-foundedYear"
+                    type="number"
+                    min="1900"
+                    max="2100"
+                    value={companyForm.foundedYear}
+                    onChange={(event) => handleCompanyChange('foundedYear', event.target.value)}
+                  />
+                </Field>
+              </div>
+              <Field id="company-website" label="Web">
+                <Input id="company-website" value={companyForm.website} onChange={(event) => handleCompanyChange('website', event.target.value)} />
+              </Field>
+              <Field id="company-logo" label="Logo (URL)">
+                <Input id="company-logo" value={companyForm.logo} onChange={(event) => handleCompanyChange('logo', event.target.value)} />
+              </Field>
+              <Field id="company-banner" label="Banner (URL)">
+                <Input id="company-banner" value={companyForm.banner} onChange={(event) => handleCompanyChange('banner', event.target.value)} />
+              </Field>
+              <Field id="company-culture" label="Cultura">
+                <Textarea id="company-culture" value={companyForm.culture} onChange={(event) => handleCompanyChange('culture', event.target.value)} />
+              </Field>
+              <Field id="company-tags" label="Tags (separados por comas)">
                 <Input id="company-tags" value={companyForm.tags} onChange={(event) => handleCompanyChange('tags', event.target.value)} />
+              </Field>
+              <Field id="company-benefits" label="Beneficios (separados por comas)">
+                <Textarea id="company-benefits" value={companyForm.benefits} onChange={(event) => handleCompanyChange('benefits', event.target.value)} />
+              </Field>
+              <Field id="company-gallery" label="Galeria (URLs separadas por comas)">
+                <Textarea id="company-gallery" value={companyForm.gallery} onChange={(event) => handleCompanyChange('gallery', event.target.value)} />
               </Field>
               <Button disabled={isBusy} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                 {isBusy ? 'Guardando...' : 'Guardar empresa'}
@@ -456,7 +498,7 @@ export function AdminPanel({ onNavigate }) {
                     <tr>
                       <th className="text-left p-3">Empresa</th>
                       <th className="text-left p-3">Industria</th>
-                      <th className="text-left p-3">Prácticas</th>
+                      <th className="text-left p-3">Practicas</th>
                       <th className="text-right p-3">Acciones</th>
                     </tr>
                   </thead>
@@ -492,7 +534,7 @@ export function AdminPanel({ onNavigate }) {
           <section className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
             <form onSubmit={saveJob} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl">{jobForm.id ? 'Editar práctica' : 'Nueva práctica'}</h2>
+                <h2 className="text-xl">{jobForm.id ? 'Editar practica' : 'Nueva practica'}</h2>
                 <Button type="button" variant="outline" size="sm" onClick={() => setJobForm(emptyJobForm)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Nueva
@@ -512,17 +554,23 @@ export function AdminPanel({ onNavigate }) {
                   </SelectContent>
                 </Select>
               </Field>
-              <Field id="job-title" label="Título">
+              <Field id="job-title" label="Titulo">
                 <Input id="job-title" required value={jobForm.title} onChange={(event) => handleJobChange('title', event.target.value)} />
               </Field>
-              <Field id="job-description" label="Descripción">
+              <Field id="job-slug" label="Slug">
+                <Input id="job-slug" value={jobForm.slug} onChange={(event) => handleJobChange('slug', event.target.value)} />
+              </Field>
+              <Field id="job-description" label="Descripcion">
                 <Textarea id="job-description" required value={jobForm.description} onChange={(event) => handleJobChange('description', event.target.value)} />
               </Field>
+              <Field id="job-overview" label="Resumen publico">
+                <Textarea id="job-overview" value={jobForm.overview} onChange={(event) => handleJobChange('overview', event.target.value)} />
+              </Field>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="job-location" label="Ubicación">
+                <Field id="job-location" label="Ubicacion">
                   <Input id="job-location" required value={jobForm.location} onChange={(event) => handleJobChange('location', event.target.value)} />
                 </Field>
-                <Field id="job-duration" label="Duración">
+                <Field id="job-duration" label="Duracion">
                   <Input id="job-duration" value={jobForm.duration} onChange={(event) => handleJobChange('duration', event.target.value)} />
                 </Field>
               </div>
@@ -532,7 +580,7 @@ export function AdminPanel({ onNavigate }) {
                     <SelectTrigger id="job-modality"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="REMOTE">Remoto</SelectItem>
-                      <SelectItem value="HYBRID">Híbrido</SelectItem>
+                      <SelectItem value="HYBRID">Hibrido</SelectItem>
                       <SelectItem value="ONSITE">Presencial</SelectItem>
                     </SelectContent>
                   </Select>
@@ -548,11 +596,58 @@ export function AdminPanel({ onNavigate }) {
                   </Select>
                 </Field>
               </div>
-              <Field id="job-tags" label="Tags">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field id="job-salaryLabel" label="Salario o ayuda">
+                  <Input id="job-salaryLabel" value={jobForm.salaryLabel} onChange={(event) => handleJobChange('salaryLabel', event.target.value)} />
+                </Field>
+                <Field id="job-schedule" label="Horario">
+                  <Input id="job-schedule" value={jobForm.schedule} onChange={(event) => handleJobChange('schedule', event.target.value)} />
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field id="job-startDate" label="Fecha de inicio">
+                  <Input id="job-startDate" value={jobForm.startDate} onChange={(event) => handleJobChange('startDate', event.target.value)} />
+                </Field>
+                <Field id="job-applicationDeadline" label="Fecha limite">
+                  <Input
+                    id="job-applicationDeadline"
+                    type="date"
+                    value={jobForm.applicationDeadline}
+                    onChange={(event) => handleJobChange('applicationDeadline', event.target.value)}
+                  />
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field id="job-openings" label="Vacantes">
+                  <Input id="job-openings" type="number" min="1" value={jobForm.openings} onChange={(event) => handleJobChange('openings', event.target.value)} />
+                </Field>
+                <Field id="job-featured" label="Destacada">
+                  <Select value={jobForm.featured} onValueChange={(value) => handleJobChange('featured', value)}>
+                    <SelectTrigger id="job-featured"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="false">No</SelectItem>
+                      <SelectItem value="true">Si</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+              <Field id="job-tags" label="Tags (separados por comas)">
                 <Input id="job-tags" value={jobForm.tags} onChange={(event) => handleJobChange('tags', event.target.value)} />
               </Field>
+              <Field id="job-responsibilities" label="Responsabilidades (separadas por comas)">
+                <Textarea id="job-responsibilities" value={jobForm.responsibilities} onChange={(event) => handleJobChange('responsibilities', event.target.value)} />
+              </Field>
+              <Field id="job-requirements" label="Requisitos (separados por comas)">
+                <Textarea id="job-requirements" value={jobForm.requirements} onChange={(event) => handleJobChange('requirements', event.target.value)} />
+              </Field>
+              <Field id="job-benefits" label="Beneficios (separados por comas)">
+                <Textarea id="job-benefits" value={jobForm.benefits} onChange={(event) => handleJobChange('benefits', event.target.value)} />
+              </Field>
+              <Field id="job-skills" label="Skills (separadas por comas)">
+                <Textarea id="job-skills" value={jobForm.skills} onChange={(event) => handleJobChange('skills', event.target.value)} />
+              </Field>
               <Button disabled={isBusy || !jobForm.companyId} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                {isBusy ? 'Guardando...' : 'Guardar práctica'}
+                {isBusy ? 'Guardando...' : 'Guardar practica'}
               </Button>
             </form>
 
@@ -561,7 +656,7 @@ export function AdminPanel({ onNavigate }) {
                 <table className="w-full min-w-[780px] text-sm">
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
-                      <th className="text-left p-3">Práctica</th>
+                      <th className="text-left p-3">Practica</th>
                       <th className="text-left p-3">Empresa</th>
                       <th className="text-left p-3">Estado</th>
                       <th className="text-left p-3">Postulaciones</th>
@@ -604,7 +699,7 @@ export function AdminPanel({ onNavigate }) {
                 <thead className="bg-gray-50 text-gray-600">
                   <tr>
                     <th className="text-left p-3">Estudiante</th>
-                    <th className="text-left p-3">Práctica</th>
+                    <th className="text-left p-3">Practica</th>
                     <th className="text-left p-3">Estado</th>
                     <th className="text-left p-3">Siguiente paso</th>
                     <th className="text-right p-3">Guardar</th>
@@ -633,7 +728,7 @@ export function AdminPanel({ onNavigate }) {
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="SUBMITTED">Enviada</SelectItem>
-                              <SelectItem value="IN_REVIEW">En revisión</SelectItem>
+                              <SelectItem value="IN_REVIEW">En revision</SelectItem>
                               <SelectItem value="INTERVIEW">Entrevista</SelectItem>
                               <SelectItem value="ACCEPTED">Aceptada</SelectItem>
                               <SelectItem value="REJECTED">Rechazada</SelectItem>

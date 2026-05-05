@@ -7,6 +7,8 @@ type CreateApplicationBody = {
   coverLetter?: unknown;
 };
 
+const DEFAULT_NEXT_STEP = 'Postulacion enviada. La empresa revisara tu perfil.';
+
 const applicationInclude = {
   job: {
     include: {
@@ -79,14 +81,42 @@ export async function createApplication(userId: string, body: CreateApplicationB
     throw new HttpError(404, 'Job not found');
   }
 
+  const existingApplication = await prisma.application.findUnique({
+    where: {
+      userId_jobId: {
+        userId,
+        jobId: job.id,
+      },
+    },
+    include: applicationInclude,
+  });
+
+  if (existingApplication) {
+    if (existingApplication.status !== ApplicationStatus.WITHDRAWN) {
+      throw new HttpError(409, 'Ya te has postulado a esta practica');
+    }
+
+    const reactivatedApplication = await prisma.application.update({
+      where: { id: existingApplication.id },
+      data: {
+        status: ApplicationStatus.SUBMITTED,
+        coverLetter,
+        nextStep: DEFAULT_NEXT_STEP,
+      },
+      include: applicationInclude,
+    });
+
+    return serializeApplication(reactivatedApplication);
+  }
+
   try {
     const application = await prisma.$transaction(async (transaction) => {
       const created = await transaction.application.create({
         data: {
           userId,
           jobId: job.id,
-      coverLetter,
-      nextStep: 'Postulacion enviada. La empresa revisara tu perfil.',
+          coverLetter,
+          nextStep: DEFAULT_NEXT_STEP,
         },
         include: applicationInclude,
       });
