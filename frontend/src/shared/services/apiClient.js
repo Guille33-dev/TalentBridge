@@ -1,6 +1,8 @@
-const DEFAULT_API_URL = 'http://localhost:4000/api/v1';
+const LOCAL_API_URL = 'http://localhost:4000/api/v1';
+const PRODUCTION_API_URL = 'https://talentbridge-production-5a43.up.railway.app/api/v1';
 const AUTH_TOKEN_KEY = 'talentbridge.authToken';
 
+const DEFAULT_API_URL = import.meta.env.PROD ? PRODUCTION_API_URL : LOCAL_API_URL;
 const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
 
 export function getAuthToken() {
