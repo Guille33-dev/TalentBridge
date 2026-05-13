@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # TalentBridge
 
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
@@ -269,3 +270,6 @@ VITE_API_URL=https://tu-backend.vercel.app/api/v1
 **Guillermo José Suárez López**
 
 2º Desarrollo de Aplicaciones Web
+=======
+# TalentBridge
+>>>>>>> 2a788911cba1050ca0bb1bf79da00fbcc584f41b
