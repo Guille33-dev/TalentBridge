@@ -66,7 +66,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header onNavigate={onNavigate} />
+      <Header onNavigate={onNavigate} currentPage="companies" />
 
       <main className="flex-1 bg-gray-50">
         {isLoading && (
@@ -136,19 +136,19 @@ export function CompanyDetail({ companyId, onNavigate }) {
                 <div className="lg:col-span-2">
                   <Tabs defaultValue="about" className="w-full">
                     <TabsList className="mb-6 flex flex-wrap h-auto">
-                      <TabsTrigger value="about">About</TabsTrigger>
-                      <TabsTrigger value="culture">Culture</TabsTrigger>
-                      <TabsTrigger value="benefits">Benefits</TabsTrigger>
-                      <TabsTrigger value="jobs">Jobs ({jobs.length})</TabsTrigger>
+                      <TabsTrigger value="about">Sobre la empresa</TabsTrigger>
+                      <TabsTrigger value="culture">Cultura</TabsTrigger>
+                      <TabsTrigger value="benefits">Beneficios</TabsTrigger>
+                      <TabsTrigger value="jobs">Practicas ({jobs.length})</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="about" className="space-y-6">
                       <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
-                        <h2 className="text-xl sm:text-2xl mb-4">About {companyData.name}</h2>
+                        <h2 className="text-xl sm:text-2xl mb-4">Sobre {companyData.name}</h2>
                         <p className="text-gray-700 leading-relaxed mb-6">{companyData.description}</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-gray-200">
                           <div>
-                            <p className="text-sm text-gray-500 mb-1">Industry</p>
+                            <p className="text-sm text-gray-500 mb-1">Sector</p>
                             <p className="text-gray-900">{companyData.industry || 'No especificado'}</p>
                           </div>
                           <div>
@@ -168,7 +168,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {companyData.gallery.map((image, index) => (
                               <div key={image} className="aspect-video rounded-lg overflow-hidden">
-                                <ImageWithFallback src={image} alt={`Office ${index + 1}`} className="w-full h-full object-cover" />
+                                <ImageWithFallback src={image} alt={`Oficina ${index + 1}`} className="w-full h-full object-cover" />
                               </div>
                             ))}
                           </div>

@@ -123,8 +123,7 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
   }, [jobId, isAuthenticated]);
 
   const getShareUrl = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('job', jobData.slug || jobData.id);
+    const url = new URL(`/practicas/${jobData.slug || jobData.id}`, window.location.origin);
     return url.toString();
   };
 
@@ -207,7 +206,7 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header onNavigate={onNavigate} />
+      <Header onNavigate={onNavigate} currentPage="jobs" />
 
       <main className="flex-1 bg-gray-50">
         <div className="bg-white border-b border-gray-200">

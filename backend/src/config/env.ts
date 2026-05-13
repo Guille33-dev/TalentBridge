@@ -17,10 +17,16 @@ function parsePort(value: string | undefined): number {
 }
 
 function parseCorsOrigins(value: string | undefined): string[] {
-  return (value || DEFAULT_CORS_ORIGIN)
+  const origins = (value || DEFAULT_CORS_ORIGIN)
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+  if ((process.env.NODE_ENV || 'development') === 'production' && origins.includes('*')) {
+    throw new Error('CORS_ORIGIN cannot include "*" in production');
+  }
+
+  return origins;
 }
 
 export const env = {
