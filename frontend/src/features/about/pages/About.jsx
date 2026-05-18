@@ -1,8 +1,9 @@
 import React from 'react';
-import { ArrowRight, HeartHandshake, Search, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, HeartHandshake, ShieldCheck, Sparkles } from 'lucide-react';
 import { Header } from '@/shared/components/layout/Header';
 import { Footer } from '@/shared/components/layout/Footer';
 import { Button } from '@/shared/components/ui/button';
+import { BrandLogo } from '@/shared/components/brand/BrandLogo';
 
 const values = [
   {
@@ -36,9 +37,7 @@ export function About({ onNavigate }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-16 lg:py-20">
             <div className="max-w-3xl mx-auto text-center">
               <div className="inline-flex flex-col items-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <Search className="w-7 h-7 text-white" />
-                </div>
+                <BrandLogo className="w-16 h-16" />
                 <span className="text-3xl text-gray-900">TalentBridge</span>
               </div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl leading-tight mb-6">

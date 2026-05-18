@@ -1,10 +1,5 @@
 import { apiRequest } from '@/shared/services/apiClient';
 
-export async function fetchAdminSummary() {
-  const result = await apiRequest('/admin/summary');
-  return result.data;
-}
-
 export async function fetchAdminCompanies() {
   const result = await apiRequest('/admin/companies');
   return result.data || [];

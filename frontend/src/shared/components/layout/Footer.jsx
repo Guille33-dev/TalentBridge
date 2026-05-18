@@ -1,5 +1,6 @@
 import React from 'react';
-import { Mail, MapPin, Phone, Search } from 'lucide-react';
+import { Mail, MapPin, Phone } from 'lucide-react';
+import { BrandLogo } from '@/shared/components/brand/BrandLogo';
 
 function FooterButton({ children, onClick }) {
     return (
@@ -40,9 +41,7 @@ export function Footer({ onNavigate }) {
           {/* Brand */}
           <div className="space-y-5">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Search className="w-6 h-6 text-white" />
-              </div>
+              <BrandLogo className="w-12 h-12" />
               <span className="text-2xl text-white">TalentBridge</span>
             </div>
             <div className="space-y-3">

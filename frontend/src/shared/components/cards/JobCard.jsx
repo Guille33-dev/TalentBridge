@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Briefcase, DollarSign, Bookmark, Star } from 'lucide-react';
+import { MapPin, Briefcase, DollarSign, Bookmark } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ImageWithFallback } from '../media/ImageWithFallback';
@@ -14,11 +14,6 @@ export function JobCard({ job, onViewDetails, isSaved = false, onToggleSave, isS
         onToggleSave?.(job);
     };
     return (<div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow group relative">
-      {job.featured && (<div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs px-3 py-1 rounded-bl-lg rounded-tr-xl flex items-center gap-1">
-          <Star className="w-3 h-3 fill-current"/>
-          Featured
-        </div>)}
-
       <div className="flex gap-4 mb-4">
         {/* Company Logo */}
         <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">

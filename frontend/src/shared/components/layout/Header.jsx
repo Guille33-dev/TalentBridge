@@ -1,7 +1,8 @@
 import React from 'react';
-import { LogOut, Search, Menu, ShieldCheck, User, X } from 'lucide-react';
+import { LogOut, Menu, ShieldCheck, User, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { BrandLogo } from '@/shared/components/brand/BrandLogo';
 
 export function Header({ onNavigate, currentPage = 'home' }) {
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -21,9 +22,7 @@ export function Header({ onNavigate, currentPage = 'home' }) {
           {/* Logo */}
           <div className="flex items-center gap-4 sm:gap-8">
             <button onClick={() => handleNavigate('home')} className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Search className="w-5 h-5 text-white"/>
-              </div>
+              <BrandLogo className="w-9 h-9" />
               <span className="text-lg sm:text-xl text-gray-900">TalentBridge</span>
             </button>
 

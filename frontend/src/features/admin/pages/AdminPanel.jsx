@@ -1,5 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, Building2, BriefcaseBusiness, ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  Building2,
+  BriefcaseBusiness,
+  ClipboardList,
+  Clock3,
+  FileText,
+  Image,
+  Pencil,
+  Plus,
+  Save,
+  Tags,
+  Trash2,
+} from 'lucide-react';
 import { Header } from '@/shared/components/layout/Header';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
@@ -16,16 +29,14 @@ import {
   fetchAdminApplications,
   fetchAdminCompanies,
   fetchAdminJobs,
-  fetchAdminSummary,
   updateAdminApplication,
   updateAdminCompany,
   updateAdminJob,
 } from '@/features/admin/services/adminApi';
 
 const tabs = [
-  { id: 'summary', label: 'Resumen', icon: BarChart3 },
   { id: 'companies', label: 'Empresas', icon: Building2 },
-  { id: 'jobs', label: 'Practicas', icon: BriefcaseBusiness },
+  { id: 'jobs', label: 'Prácticas', icon: BriefcaseBusiness },
   { id: 'applications', label: 'Postulaciones', icon: ClipboardList },
 ];
 
@@ -77,17 +88,12 @@ const statusLabels = {
   OPEN: 'Abierta',
   CLOSED: 'Cerrada',
   SUBMITTED: 'Enviada',
-  IN_REVIEW: 'En revision',
+  IN_REVIEW: 'En revisión',
   INTERVIEW: 'Entrevista',
   ACCEPTED: 'Aceptada',
   REJECTED: 'Rechazada',
   WITHDRAWN: 'Retirada',
 };
-
-function formatDate(value) {
-  if (!value) return 'Sin fecha';
-  return new Date(value).toLocaleDateString('es-ES');
-}
 
 function toCsv(value) {
   return Array.isArray(value) ? value.join(', ') : value || '';
@@ -123,10 +129,40 @@ function Field({ id, label, children }) {
   );
 }
 
+function FormBlock({ title, description, icon: Icon, children }) {
+  return (
+    <section className="space-y-4 border-t border-gray-100 pt-5 first:border-t-0 first:pt-0">
+      <div className="flex items-start gap-3">
+        {Icon && (
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+            <Icon className="h-4 w-4" />
+          </span>
+        )}
+        <div>
+          <h3 className="text-base text-gray-900">{title}</h3>
+          {description && <p className="text-sm text-gray-500">{description}</p>}
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function TableHeader({ title, description, count }) {
+  return (
+    <div className="flex flex-col gap-1 border-b border-gray-100 px-4 py-4 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg text-gray-900">{title}</h2>
+        <Badge variant="secondary">{count}</Badge>
+      </div>
+      {description && <p className="text-sm text-gray-500">{description}</p>}
+    </div>
+  );
+}
+
 export function AdminPanel({ onNavigate }) {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const [activeTab, setActiveTab] = useState('summary');
-  const [summary, setSummary] = useState(null);
+  const [activeTab, setActiveTab] = useState('companies');
   const [companies, setCompanies] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -142,14 +178,12 @@ export function AdminPanel({ onNavigate }) {
 
   async function loadAdminData() {
     setError(null);
-    const [summaryResult, companiesResult, jobsResult, applicationsResult] = await Promise.all([
-      fetchAdminSummary(),
+    const [companiesResult, jobsResult, applicationsResult] = await Promise.all([
       fetchAdminCompanies(),
       fetchAdminJobs(),
       fetchAdminApplications(),
     ]);
 
-    setSummary(summaryResult);
     setCompanies(companiesResult);
     setJobs(jobsResult);
     setApplications(applicationsResult);
@@ -217,10 +251,10 @@ export function AdminPanel({ onNavigate }) {
     try {
       if (jobForm.id) {
         await updateAdminJob(jobForm.id, jobForm);
-        setSuccess('Practica actualizada.');
+        setSuccess('Práctica actualizada.');
       } else {
         await createAdminJob(jobForm);
-        setSuccess('Practica creada.');
+        setSuccess('Práctica creada.');
       }
 
       setJobForm(emptyJobForm);
@@ -255,7 +289,7 @@ export function AdminPanel({ onNavigate }) {
 
     try {
       await deleteAdminJob(jobId);
-      setSuccess('Practica eliminada.');
+      setSuccess('Práctica eliminada.');
       await loadAdminData();
     } catch (requestError) {
       setError(requestError.message);
@@ -271,7 +305,7 @@ export function AdminPanel({ onNavigate }) {
 
     try {
       await updateAdminApplication(applicationId, applicationDrafts[applicationId]);
-      setSuccess('Postulacion actualizada.');
+      setSuccess('Postulación actualizada.');
       await loadAdminData();
     } catch (requestError) {
       setError(requestError.message);
@@ -285,7 +319,7 @@ export function AdminPanel({ onNavigate }) {
       type: 'company',
       id: company.id,
       title: 'Eliminar empresa',
-      description: `Vas a eliminar "${company.name}". Esta accion puede afectar a sus practicas asociadas.`,
+      description: `Vas a eliminar "${company.name}". Esta acción puede afectar a sus prácticas asociadas.`,
       confirmLabel: 'Eliminar empresa',
     });
   };
@@ -294,9 +328,9 @@ export function AdminPanel({ onNavigate }) {
     setPendingDelete({
       type: 'job',
       id: job.id,
-      title: 'Eliminar practica',
-      description: `Vas a eliminar "${job.title}". Esta accion no se puede deshacer desde el panel.`,
-      confirmLabel: 'Eliminar practica',
+      title: 'Eliminar práctica',
+      description: `Vas a eliminar "${job.title}". Esta acción no se puede deshacer desde el panel.`,
+      confirmLabel: 'Eliminar práctica',
     });
   };
 
@@ -367,7 +401,7 @@ export function AdminPanel({ onNavigate }) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header onNavigate={onNavigate} currentPage="admin" />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 text-gray-600">Cargando sesion...</main>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 text-gray-600">Cargando sesión...</main>
       </div>
     );
   }
@@ -381,7 +415,7 @@ export function AdminPanel({ onNavigate }) {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
             <h1 className="text-2xl mb-2">Acceso restringido</h1>
-            <p className="text-gray-600">Tu usuario no tiene permisos de administracion.</p>
+            <p className="text-gray-600">Tu usuario no tiene permisos de administración.</p>
           </div>
         </main>
       </div>
@@ -395,8 +429,8 @@ export function AdminPanel({ onNavigate }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl mb-1">Panel de administracion</h1>
-            <p className="text-gray-600 text-sm">Gestion de empresas, practicas y postulaciones.</p>
+            <h1 className="text-2xl sm:text-3xl mb-1">Panel de administración</h1>
+            <p className="text-gray-600 text-sm">Gestión de empresas, prácticas y postulaciones.</p>
           </div>
           <AdminTabs activeTab={activeTab} onChange={setActiveTab} />
         </div>
@@ -404,101 +438,116 @@ export function AdminPanel({ onNavigate }) {
         {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{error}</div>}
         {success && <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 text-sm">{success}</div>}
 
-        {activeTab === 'summary' && (
-          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              ['Empresas', summary?.companies ?? 0],
-              ['Practicas', summary?.jobs?.total ?? 0],
-              ['Abiertas', summary?.jobs?.open ?? 0],
-              ['Postulaciones', summary?.applications ?? 0],
-            ].map(([label, value]) => (
-              <div key={label} className="bg-white rounded-xl border border-gray-200 p-5">
-                <p className="text-2xl">{value}</p>
-                <p className="text-sm text-gray-600">{label}</p>
-              </div>
-            ))}
-          </section>
-        )}
-
         {activeTab === 'companies' && (
-          <section className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6">
-            <form onSubmit={saveCompany} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl">{companyForm.id ? 'Editar empresa' : 'Nueva empresa'}</h2>
+          <section className="space-y-6">
+            <form onSubmit={saveCompany} className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 space-y-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-xl text-gray-950">{companyForm.id ? 'Editar empresa' : 'Nueva empresa'}</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Completa los datos que verá el estudiante en el perfil público de la empresa.
+                  </p>
+                </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setCompanyForm(emptyCompanyForm)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva
+                  <Plus className="w-4 h-4" />
+                  Limpiar formulario
                 </Button>
               </div>
-              <Field id="company-name" label="Nombre">
-                <Input id="company-name" required value={companyForm.name} onChange={(event) => handleCompanyChange('name', event.target.value)} />
-              </Field>
-              <Field id="company-slug" label="Slug">
-                <Input id="company-slug" value={companyForm.slug} onChange={(event) => handleCompanyChange('slug', event.target.value)} />
-              </Field>
-              <Field id="company-description" label="Descripcion">
-                <Textarea id="company-description" required value={companyForm.description} onChange={(event) => handleCompanyChange('description', event.target.value)} />
-              </Field>
-              <Field id="company-tagline" label="Tagline">
-                <Input id="company-tagline" value={companyForm.tagline} onChange={(event) => handleCompanyChange('tagline', event.target.value)} />
-              </Field>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="company-location" label="Ubicacion">
-                  <Input id="company-location" value={companyForm.location} onChange={(event) => handleCompanyChange('location', event.target.value)} />
-                </Field>
-                <Field id="company-industry" label="Industria">
-                  <Input id="company-industry" value={companyForm.industry} onChange={(event) => handleCompanyChange('industry', event.target.value)} />
-                </Field>
+
+              <FormBlock title="Datos principales" description="Información básica para identificar la empresa." icon={Building2}>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <Field id="company-name" label="Nombre">
+                    <Input id="company-name" required placeholder="TalentBridge Labs" value={companyForm.name} onChange={(event) => handleCompanyChange('name', event.target.value)} />
+                  </Field>
+                  <Field id="company-slug" label="URL personalizada">
+                    <Input id="company-slug" placeholder="talentbridge-labs" value={companyForm.slug} onChange={(event) => handleCompanyChange('slug', event.target.value)} />
+                  </Field>
+                  <Field id="company-tagline" label="Frase destacada">
+                    <Input id="company-tagline" placeholder="Tecnología para impulsar talento joven" value={companyForm.tagline} onChange={(event) => handleCompanyChange('tagline', event.target.value)} />
+                  </Field>
+                  <Field id="company-location" label="Ubicación">
+                    <Input id="company-location" placeholder="Sevilla, España" value={companyForm.location} onChange={(event) => handleCompanyChange('location', event.target.value)} />
+                  </Field>
+                  <Field id="company-industry" label="Sector">
+                    <Input id="company-industry" placeholder="Tecnología, marketing, educación..." value={companyForm.industry} onChange={(event) => handleCompanyChange('industry', event.target.value)} />
+                  </Field>
+                  <Field id="company-size" label="Tamaño">
+                    <Input id="company-size" placeholder="11-50 empleados" value={companyForm.size} onChange={(event) => handleCompanyChange('size', event.target.value)} />
+                  </Field>
+                  <Field id="company-foundedYear" label="Año de fundación">
+                    <Input
+                      id="company-foundedYear"
+                      type="number"
+                      min="1900"
+                      max="2100"
+                      placeholder="2024"
+                      value={companyForm.foundedYear}
+                      onChange={(event) => handleCompanyChange('foundedYear', event.target.value)}
+                    />
+                  </Field>
+                  <Field id="company-website" label="Página web">
+                    <Input id="company-website" placeholder="https://empresa.com" value={companyForm.website} onChange={(event) => handleCompanyChange('website', event.target.value)} />
+                  </Field>
+                  <div className="lg:col-span-2">
+                    <Field id="company-description" label="Descripción">
+                      <Textarea id="company-description" required className="min-h-28" placeholder="Explica qué hace la empresa y por qué es interesante para estudiantes en prácticas." value={companyForm.description} onChange={(event) => handleCompanyChange('description', event.target.value)} />
+                    </Field>
+                  </div>
+                </div>
+              </FormBlock>
+
+              <FormBlock title="Imágenes" description="URLs públicas para mostrar el logo, la portada y la galería." icon={Image}>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <Field id="company-logo" label="Logo de la empresa">
+                    <Input id="company-logo" placeholder="https://..." value={companyForm.logo} onChange={(event) => handleCompanyChange('logo', event.target.value)} />
+                  </Field>
+                  <Field id="company-banner" label="Imagen de portada">
+                    <Input id="company-banner" placeholder="https://..." value={companyForm.banner} onChange={(event) => handleCompanyChange('banner', event.target.value)} />
+                  </Field>
+                  <div className="lg:col-span-2">
+                    <Field id="company-gallery" label="Galería de imágenes">
+                      <Textarea id="company-gallery" className="min-h-24" placeholder="Pega varias URLs separadas por comas." value={companyForm.gallery} onChange={(event) => handleCompanyChange('gallery', event.target.value)} />
+                    </Field>
+                  </div>
+                </div>
+              </FormBlock>
+
+              <FormBlock title="Cultura y beneficios" description="Contenido que ayuda a presentar mejor la empresa." icon={Tags}>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div className="lg:col-span-2">
+                    <Field id="company-culture" label="Cultura">
+                      <Textarea id="company-culture" className="min-h-24" placeholder="Describe el ambiente de trabajo, forma de aprender y valores de la empresa." value={companyForm.culture} onChange={(event) => handleCompanyChange('culture', event.target.value)} />
+                    </Field>
+                  </div>
+                  <Field id="company-tags" label="Etiquetas">
+                    <Input id="company-tags" placeholder="Remoto, flexible, innovación" value={companyForm.tags} onChange={(event) => handleCompanyChange('tags', event.target.value)} />
+                  </Field>
+                  <Field id="company-benefits" label="Beneficios">
+                    <Textarea id="company-benefits" className="min-h-24" placeholder="Mentoría, horario flexible, formación..." value={companyForm.benefits} onChange={(event) => handleCompanyChange('benefits', event.target.value)} />
+                  </Field>
+                </div>
+              </FormBlock>
+
+              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" onClick={() => setCompanyForm(emptyCompanyForm)}>
+                  Cancelar
+                </Button>
+                <Button disabled={isBusy} type="submit" className="bg-purple-600 hover:bg-purple-700 text-white">
+                  <Save className="w-4 h-4" />
+                  {isBusy ? 'Guardando...' : companyForm.id ? 'Guardar cambios' : 'Crear empresa'}
+                </Button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="company-size" label="Tamano">
-                  <Input id="company-size" value={companyForm.size} onChange={(event) => handleCompanyChange('size', event.target.value)} />
-                </Field>
-                <Field id="company-foundedYear" label="Ano de fundacion">
-                  <Input
-                    id="company-foundedYear"
-                    type="number"
-                    min="1900"
-                    max="2100"
-                    value={companyForm.foundedYear}
-                    onChange={(event) => handleCompanyChange('foundedYear', event.target.value)}
-                  />
-                </Field>
-              </div>
-              <Field id="company-website" label="Web">
-                <Input id="company-website" value={companyForm.website} onChange={(event) => handleCompanyChange('website', event.target.value)} />
-              </Field>
-              <Field id="company-logo" label="Logo (URL)">
-                <Input id="company-logo" value={companyForm.logo} onChange={(event) => handleCompanyChange('logo', event.target.value)} />
-              </Field>
-              <Field id="company-banner" label="Banner (URL)">
-                <Input id="company-banner" value={companyForm.banner} onChange={(event) => handleCompanyChange('banner', event.target.value)} />
-              </Field>
-              <Field id="company-culture" label="Cultura">
-                <Textarea id="company-culture" value={companyForm.culture} onChange={(event) => handleCompanyChange('culture', event.target.value)} />
-              </Field>
-              <Field id="company-tags" label="Tags (separados por comas)">
-                <Input id="company-tags" value={companyForm.tags} onChange={(event) => handleCompanyChange('tags', event.target.value)} />
-              </Field>
-              <Field id="company-benefits" label="Beneficios (separados por comas)">
-                <Textarea id="company-benefits" value={companyForm.benefits} onChange={(event) => handleCompanyChange('benefits', event.target.value)} />
-              </Field>
-              <Field id="company-gallery" label="Galeria (URLs separadas por comas)">
-                <Textarea id="company-gallery" value={companyForm.gallery} onChange={(event) => handleCompanyChange('gallery', event.target.value)} />
-              </Field>
-              <Button disabled={isBusy} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                {isBusy ? 'Guardando...' : 'Guardar empresa'}
-              </Button>
             </form>
 
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <TableHeader title="Empresas registradas" description="Edita o elimina perfiles de empresa desde esta tabla." count={`${companies.length} empresas`} />
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
                       <th className="text-left p-3">Empresa</th>
                       <th className="text-left p-3">Industria</th>
-                      <th className="text-left p-3">Practicas</th>
+                      <th className="text-left p-3">Prácticas</th>
                       <th className="text-right p-3">Acciones</th>
                     </tr>
                   </thead>
@@ -531,132 +580,156 @@ export function AdminPanel({ onNavigate }) {
         )}
 
         {activeTab === 'jobs' && (
-          <section className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
-            <form onSubmit={saveJob} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl">{jobForm.id ? 'Editar practica' : 'Nueva practica'}</h2>
+          <section className="space-y-6">
+            <form onSubmit={saveJob} className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 space-y-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-xl text-gray-950">{jobForm.id ? 'Editar práctica' : 'Nueva práctica'}</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Define la vacante que aparecerá en el buscador de prácticas.
+                  </p>
+                </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setJobForm(emptyJobForm)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva
+                  <Plus className="w-4 h-4" />
+                  Limpiar formulario
                 </Button>
               </div>
-              <Field id="job-company" label="Empresa">
-                <Select value={jobForm.companyId} onValueChange={(value) => handleJobChange('companyId', value)}>
-                  <SelectTrigger id="job-company">
-                    <SelectValue placeholder="Selecciona empresa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companyOptions.map((company) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field id="job-title" label="Titulo">
-                <Input id="job-title" required value={jobForm.title} onChange={(event) => handleJobChange('title', event.target.value)} />
-              </Field>
-              <Field id="job-slug" label="Slug">
-                <Input id="job-slug" value={jobForm.slug} onChange={(event) => handleJobChange('slug', event.target.value)} />
-              </Field>
-              <Field id="job-description" label="Descripcion">
-                <Textarea id="job-description" required value={jobForm.description} onChange={(event) => handleJobChange('description', event.target.value)} />
-              </Field>
-              <Field id="job-overview" label="Resumen publico">
-                <Textarea id="job-overview" value={jobForm.overview} onChange={(event) => handleJobChange('overview', event.target.value)} />
-              </Field>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="job-location" label="Ubicacion">
-                  <Input id="job-location" required value={jobForm.location} onChange={(event) => handleJobChange('location', event.target.value)} />
-                </Field>
-                <Field id="job-duration" label="Duracion">
-                  <Input id="job-duration" value={jobForm.duration} onChange={(event) => handleJobChange('duration', event.target.value)} />
-                </Field>
+
+              <FormBlock title="Datos principales" description="Empresa, título, estado y datos básicos de la práctica." icon={BriefcaseBusiness}>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <Field id="job-company" label="Empresa">
+                    <Select value={jobForm.companyId} onValueChange={(value) => handleJobChange('companyId', value)}>
+                      <SelectTrigger id="job-company">
+                        <SelectValue placeholder="Selecciona una empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companyOptions.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field id="job-title" label="Título de la práctica">
+                    <Input id="job-title" required placeholder="Prácticas de desarrollo frontend" value={jobForm.title} onChange={(event) => handleJobChange('title', event.target.value)} />
+                  </Field>
+                  <Field id="job-slug" label="URL personalizada">
+                    <Input id="job-slug" placeholder="practicas-desarrollo-frontend" value={jobForm.slug} onChange={(event) => handleJobChange('slug', event.target.value)} />
+                  </Field>
+                  <Field id="job-location" label="Ubicación">
+                    <Input id="job-location" required placeholder="Sevilla, remoto o híbrido" value={jobForm.location} onChange={(event) => handleJobChange('location', event.target.value)} />
+                  </Field>
+                  <Field id="job-modality" label="Modalidad">
+                    <Select value={jobForm.modality} onValueChange={(value) => handleJobChange('modality', value)}>
+                      <SelectTrigger id="job-modality"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="REMOTE">Remoto</SelectItem>
+                        <SelectItem value="HYBRID">Híbrido</SelectItem>
+                        <SelectItem value="ONSITE">Presencial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field id="job-status" label="Estado">
+                    <Select value={jobForm.status} onValueChange={(value) => handleJobChange('status', value)}>
+                      <SelectTrigger id="job-status"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DRAFT">Borrador</SelectItem>
+                        <SelectItem value="OPEN">Abierta</SelectItem>
+                        <SelectItem value="CLOSED">Cerrada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field id="job-openings" label="Vacantes disponibles">
+                    <Input id="job-openings" type="number" min="1" value={jobForm.openings} onChange={(event) => handleJobChange('openings', event.target.value)} />
+                  </Field>
+                  <Field id="job-featured" label="Marcar como destacada">
+                    <Select value={jobForm.featured} onValueChange={(value) => handleJobChange('featured', value)}>
+                      <SelectTrigger id="job-featured"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="false">No</SelectItem>
+                        <SelectItem value="true">Sí</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+              </FormBlock>
+
+              <FormBlock title="Contenido público" description="Textos que verá el estudiante antes de postularse." icon={FileText}>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div className="lg:col-span-2">
+                    <Field id="job-description" label="Descripción">
+                      <Textarea id="job-description" required className="min-h-28" placeholder="Describe la práctica, el equipo y el tipo de aprendizaje esperado." value={jobForm.description} onChange={(event) => handleJobChange('description', event.target.value)} />
+                    </Field>
+                  </div>
+                  <div className="lg:col-span-2">
+                    <Field id="job-overview" label="Resumen público">
+                      <Textarea id="job-overview" className="min-h-24" placeholder="Resumen breve para la página de detalle." value={jobForm.overview} onChange={(event) => handleJobChange('overview', event.target.value)} />
+                    </Field>
+                  </div>
+                  <Field id="job-tags" label="Etiquetas">
+                    <Input id="job-tags" placeholder="Frontend, React, UX" value={jobForm.tags} onChange={(event) => handleJobChange('tags', event.target.value)} />
+                  </Field>
+                  <Field id="job-skills" label="Habilidades">
+                    <Textarea id="job-skills" className="min-h-24" placeholder="JavaScript, React, comunicación..." value={jobForm.skills} onChange={(event) => handleJobChange('skills', event.target.value)} />
+                  </Field>
+                  <Field id="job-responsibilities" label="Responsabilidades">
+                    <Textarea id="job-responsibilities" className="min-h-28" placeholder="Tareas separadas por comas." value={jobForm.responsibilities} onChange={(event) => handleJobChange('responsibilities', event.target.value)} />
+                  </Field>
+                  <Field id="job-requirements" label="Requisitos">
+                    <Textarea id="job-requirements" className="min-h-28" placeholder="Requisitos separados por comas." value={jobForm.requirements} onChange={(event) => handleJobChange('requirements', event.target.value)} />
+                  </Field>
+                  <div className="lg:col-span-2">
+                    <Field id="job-benefits" label="Beneficios">
+                      <Textarea id="job-benefits" className="min-h-24" placeholder="Formación, mentoría, ayuda económica..." value={jobForm.benefits} onChange={(event) => handleJobChange('benefits', event.target.value)} />
+                    </Field>
+                  </div>
+                </div>
+              </FormBlock>
+
+              <FormBlock title="Condiciones y fechas" description="Datos operativos de la práctica." icon={Clock3}>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <Field id="job-duration" label="Duración">
+                    <Input id="job-duration" placeholder="3 meses, 6 meses..." value={jobForm.duration} onChange={(event) => handleJobChange('duration', event.target.value)} />
+                  </Field>
+                  <Field id="job-salaryLabel" label="Ayuda económica">
+                    <Input id="job-salaryLabel" placeholder="600 €/mes o no remunerada" value={jobForm.salaryLabel} onChange={(event) => handleJobChange('salaryLabel', event.target.value)} />
+                  </Field>
+                  <Field id="job-schedule" label="Horario">
+                    <Input id="job-schedule" placeholder="Lunes a viernes, mañana" value={jobForm.schedule} onChange={(event) => handleJobChange('schedule', event.target.value)} />
+                  </Field>
+                  <Field id="job-startDate" label="Fecha de inicio">
+                    <Input id="job-startDate" placeholder="Septiembre 2026" value={jobForm.startDate} onChange={(event) => handleJobChange('startDate', event.target.value)} />
+                  </Field>
+                  <Field id="job-applicationDeadline" label="Fecha límite de postulación">
+                    <Input
+                      id="job-applicationDeadline"
+                      type="date"
+                      value={jobForm.applicationDeadline}
+                      onChange={(event) => handleJobChange('applicationDeadline', event.target.value)}
+                    />
+                  </Field>
+                </div>
+              </FormBlock>
+
+              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" onClick={() => setJobForm(emptyJobForm)}>
+                  Cancelar
+                </Button>
+                <Button disabled={isBusy || !jobForm.companyId} type="submit" className="bg-purple-600 hover:bg-purple-700 text-white">
+                  <Save className="w-4 h-4" />
+                  {isBusy ? 'Guardando...' : jobForm.id ? 'Guardar cambios' : 'Crear práctica'}
+                </Button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="job-modality" label="Modalidad">
-                  <Select value={jobForm.modality} onValueChange={(value) => handleJobChange('modality', value)}>
-                    <SelectTrigger id="job-modality"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="REMOTE">Remoto</SelectItem>
-                      <SelectItem value="HYBRID">Hibrido</SelectItem>
-                      <SelectItem value="ONSITE">Presencial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field id="job-status" label="Estado">
-                  <Select value={jobForm.status} onValueChange={(value) => handleJobChange('status', value)}>
-                    <SelectTrigger id="job-status"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DRAFT">Borrador</SelectItem>
-                      <SelectItem value="OPEN">Abierta</SelectItem>
-                      <SelectItem value="CLOSED">Cerrada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="job-salaryLabel" label="Salario o ayuda">
-                  <Input id="job-salaryLabel" value={jobForm.salaryLabel} onChange={(event) => handleJobChange('salaryLabel', event.target.value)} />
-                </Field>
-                <Field id="job-schedule" label="Horario">
-                  <Input id="job-schedule" value={jobForm.schedule} onChange={(event) => handleJobChange('schedule', event.target.value)} />
-                </Field>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="job-startDate" label="Fecha de inicio">
-                  <Input id="job-startDate" value={jobForm.startDate} onChange={(event) => handleJobChange('startDate', event.target.value)} />
-                </Field>
-                <Field id="job-applicationDeadline" label="Fecha limite">
-                  <Input
-                    id="job-applicationDeadline"
-                    type="date"
-                    value={jobForm.applicationDeadline}
-                    onChange={(event) => handleJobChange('applicationDeadline', event.target.value)}
-                  />
-                </Field>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field id="job-openings" label="Vacantes">
-                  <Input id="job-openings" type="number" min="1" value={jobForm.openings} onChange={(event) => handleJobChange('openings', event.target.value)} />
-                </Field>
-                <Field id="job-featured" label="Destacada">
-                  <Select value={jobForm.featured} onValueChange={(value) => handleJobChange('featured', value)}>
-                    <SelectTrigger id="job-featured"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="false">No</SelectItem>
-                      <SelectItem value="true">Si</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-              <Field id="job-tags" label="Tags (separados por comas)">
-                <Input id="job-tags" value={jobForm.tags} onChange={(event) => handleJobChange('tags', event.target.value)} />
-              </Field>
-              <Field id="job-responsibilities" label="Responsabilidades (separadas por comas)">
-                <Textarea id="job-responsibilities" value={jobForm.responsibilities} onChange={(event) => handleJobChange('responsibilities', event.target.value)} />
-              </Field>
-              <Field id="job-requirements" label="Requisitos (separados por comas)">
-                <Textarea id="job-requirements" value={jobForm.requirements} onChange={(event) => handleJobChange('requirements', event.target.value)} />
-              </Field>
-              <Field id="job-benefits" label="Beneficios (separados por comas)">
-                <Textarea id="job-benefits" value={jobForm.benefits} onChange={(event) => handleJobChange('benefits', event.target.value)} />
-              </Field>
-              <Field id="job-skills" label="Skills (separadas por comas)">
-                <Textarea id="job-skills" value={jobForm.skills} onChange={(event) => handleJobChange('skills', event.target.value)} />
-              </Field>
-              <Button disabled={isBusy || !jobForm.companyId} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                {isBusy ? 'Guardando...' : 'Guardar practica'}
-              </Button>
             </form>
 
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <TableHeader title="Prácticas publicadas" description="Edita, cierra o elimina vacantes desde esta tabla." count={`${jobs.length} prácticas`} />
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[780px] text-sm">
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
-                      <th className="text-left p-3">Practica</th>
+                      <th className="text-left p-3">Práctica</th>
                       <th className="text-left p-3">Empresa</th>
                       <th className="text-left p-3">Estado</th>
                       <th className="text-left p-3">Postulaciones</th>
@@ -699,7 +772,7 @@ export function AdminPanel({ onNavigate }) {
                 <thead className="bg-gray-50 text-gray-600">
                   <tr>
                     <th className="text-left p-3">Estudiante</th>
-                    <th className="text-left p-3">Practica</th>
+                    <th className="text-left p-3">Práctica</th>
                     <th className="text-left p-3">Estado</th>
                     <th className="text-left p-3">Siguiente paso</th>
                     <th className="text-right p-3">Guardar</th>
@@ -728,7 +801,7 @@ export function AdminPanel({ onNavigate }) {
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="SUBMITTED">Enviada</SelectItem>
-                              <SelectItem value="IN_REVIEW">En revision</SelectItem>
+                              <SelectItem value="IN_REVIEW">En revisión</SelectItem>
                               <SelectItem value="INTERVIEW">Entrevista</SelectItem>
                               <SelectItem value="ACCEPTED">Aceptada</SelectItem>
                               <SelectItem value="REJECTED">Rechazada</SelectItem>

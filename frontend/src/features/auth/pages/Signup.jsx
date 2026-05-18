@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Search, Mail, Lock, Eye, EyeOff, User, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, User, ArrowLeft } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { pageKeys } from '@/app/config/pageKeys';
+import { BrandLogo } from '@/shared/components/brand/BrandLogo';
 
 export function Signup({ onNavigate, onSwitchToLogin }) {
+  const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -21,6 +24,15 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    onNavigate('home');
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -63,10 +75,8 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-600 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         <div className="hidden lg:block text-white">
-          <button onClick={() => onNavigate('home')} className="flex items-center gap-2 mb-12 hover:opacity-80 transition-opacity">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-              <Search className="w-6 h-6 text-white" />
-            </div>
+          <button onClick={() => onNavigate('home')} className="flex items-center gap-3 mb-8 hover:opacity-90 transition-opacity">
+            <BrandLogo className="w-9 h-9" withSurface />
             <span className="text-2xl">TalentBridge</span>
           </button>
 
@@ -114,17 +124,11 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 md:p-12 max-h-[90vh] overflow-y-auto">
-          <div className="lg:hidden mb-6 sm:mb-8">
-            <button onClick={() => onNavigate('home')} className="flex items-center gap-2 mb-4 sm:mb-6 text-gray-600 hover:text-gray-900">
+          <div className="mb-6 sm:mb-8">
+            <button onClick={handleBack} className="flex items-center gap-2 mb-4 sm:mb-6 text-gray-600 hover:text-gray-900">
               <ArrowLeft className="w-5 h-5" />
-              <span className="text-sm">Volver al inicio</span>
+              <span className="text-sm">Volver</span>
             </button>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Search className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg sm:text-xl text-gray-900">TalentBridge</span>
-            </div>
           </div>
 
           <div className="mb-6 sm:mb-8">
