@@ -1,4 +1,4 @@
-import { ApplicationStatus, JobModality, JobStatus, Prisma, UserRole } from '@prisma/client';
+import { ApplicationStatus, JobModality, JobStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { HttpError } from '../../shared/errors/httpError';
 
@@ -347,29 +347,6 @@ function buildJobUpdateData(body: AdminJobBody): Prisma.JobUncheckedUpdateInput 
   if (body.skills !== undefined) data.skills = getOptionalStringArray(body.skills, 'skills') || [];
 
   return data;
-}
-
-export async function getAdminSummary() {
-  const [companies, openJobs, draftJobs, closedJobs, applications, students] = await prisma.$transaction([
-    prisma.company.count(),
-    prisma.job.count({ where: { status: JobStatus.OPEN } }),
-    prisma.job.count({ where: { status: JobStatus.DRAFT } }),
-    prisma.job.count({ where: { status: JobStatus.CLOSED } }),
-    prisma.application.count(),
-    prisma.user.count({ where: { role: UserRole.STUDENT } }),
-  ]);
-
-  return {
-    companies,
-    jobs: {
-      open: openJobs,
-      draft: draftJobs,
-      closed: closedJobs,
-      total: openJobs + draftJobs + closedJobs,
-    },
-    applications,
-    students,
-  };
 }
 
 export async function listAdminCompanies() {

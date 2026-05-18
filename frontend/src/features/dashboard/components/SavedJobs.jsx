@@ -49,10 +49,14 @@ export function SavedJobs({ onNavigate }) {
         setError(null);
 
         try {
-            await deleteSavedJob(job.slug || job.id);
+            await deleteSavedJob(job.id);
             setSavedJobs((current) => current.filter((savedJob) => savedJob.job.id !== job.id));
         } catch (requestError) {
-            setError(requestError.message);
+            if (requestError.message.includes('Saved job not found')) {
+                setSavedJobs((current) => current.filter((savedJob) => savedJob.job.id !== job.id));
+            } else {
+                setError(requestError.message);
+            }
         } finally {
             setSavingJobId(null);
         }

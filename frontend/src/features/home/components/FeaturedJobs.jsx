@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { JobCard } from '@/shared/components/cards/JobCard';
 import { fetchJobs } from '@/features/jobs/services/jobsApi';
+import { useSavedJobToggle } from '@/features/savedJobs/hooks/useSavedJobToggle';
 import { ChevronRight } from 'lucide-react';
 
 export function FeaturedJobs({ onNavigate }) {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
 
   useEffect(() => {
     let ignore = false;
@@ -60,8 +62,16 @@ export function FeaturedJobs({ onNavigate }) {
           </div>
         ) : jobs.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {savedJobsError && <div className="lg:col-span-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{savedJobsError}</div>}
             {jobs.map((job) => (
-              <JobCard key={job.id} job={job} onViewDetails={(jobId) => onNavigate('job-detail', jobId)} />
+              <JobCard
+                key={job.id}
+                job={job}
+                isSaved={savedJobIds.includes(job.id)}
+                isSaveDisabled={savingJobId === job.id}
+                onToggleSave={toggleSavedJob}
+                onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
+              />
             ))}
           </div>
         ) : (

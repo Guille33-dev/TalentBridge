@@ -22,8 +22,14 @@ export function JobCard({ job, onViewDetails, isSaved = false, onToggleSave, isS
 
         {/* Title and Company */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg mb-1 group-hover:text-purple-600 transition-colors line-clamp-1">
-            {job.title}
+          <h3 className="mb-1">
+            <button
+              type="button"
+              onClick={handleViewDetails}
+              className="block max-w-full text-left text-lg group-hover:text-purple-600 transition-colors line-clamp-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 rounded-sm"
+            >
+              {job.title}
+            </button>
           </h3>
           <p className="text-gray-600">{job.company}</p>
         </div>
@@ -34,6 +40,7 @@ export function JobCard({ job, onViewDetails, isSaved = false, onToggleSave, isS
           onClick={handleToggleSave}
           disabled={isSaveDisabled || !onToggleSave}
           aria-pressed={isSaved}
+          aria-label={isSaved ? 'Quitar practica guardada' : 'Guardar practica'}
           className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isSaved
             ? 'bg-purple-50 text-purple-600'
             : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}

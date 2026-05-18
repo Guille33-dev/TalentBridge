@@ -3,6 +3,7 @@ import { Header } from '@/shared/components/layout/Header';
 import { Footer } from '@/shared/components/layout/Footer';
 import { JobCard } from '@/shared/components/cards/JobCard';
 import { fetchCompany } from '@/features/companies/services/companiesApi';
+import { useSavedJobToggle } from '@/features/savedJobs/hooks/useSavedJobToggle';
 import { MapPin, Users, Globe, ChevronRight } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
@@ -12,6 +13,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
   const [companyData, setCompanyData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
 
   useEffect(() => {
     let ignore = false;
@@ -197,8 +199,18 @@ export function CompanyDetail({ companyId, onNavigate }) {
                     </TabsContent>
 
                     <TabsContent value="jobs" className="space-y-6">
+                      {savedJobsError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{savedJobsError}</div>}
                       {jobs.length > 0 ? (
-                        jobs.map((job) => <JobCard key={job.id} job={job} onViewDetails={(jobId) => onNavigate('job-detail', jobId)} />)
+                        jobs.map((job) => (
+                          <JobCard
+                            key={job.id}
+                            job={job}
+                            isSaved={savedJobIds.includes(job.id)}
+                            isSaveDisabled={savingJobId === job.id}
+                            onToggleSave={toggleSavedJob}
+                            onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
+                          />
+                        ))
                       ) : (
                         <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-600">Esta empresa no tiene practicas abiertas ahora mismo.</div>
                       )}

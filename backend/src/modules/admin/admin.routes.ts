@@ -7,7 +7,6 @@ import {
   createAdminJob,
   deleteAdminCompany,
   deleteAdminJob,
-  getAdminSummary,
   listAdminApplications,
   listAdminCompanies,
   listAdminJobs,
@@ -19,14 +18,6 @@ import {
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireRole(UserRole.ADMIN));
-
-adminRouter.get(
-  '/summary',
-  asyncHandler(async (_req, res) => {
-    const summary = await getAdminSummary();
-    res.json({ data: summary });
-  }),
-);
 
 adminRouter.get(
   '/companies',

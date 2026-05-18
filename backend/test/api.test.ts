@@ -333,7 +333,7 @@ describe.sequential('Auth y permisos', () => {
   });
 
   it('bloquea el panel admin para estudiantes', async () => {
-    const response = await request(app).get('/api/v1/admin/summary').set('Authorization', `Bearer ${studentToken}`).expect(403);
+    const response = await request(app).get('/api/v1/admin/companies').set('Authorization', `Bearer ${studentToken}`).expect(403);
 
     expect(response.body.error.message).toBe('Insufficient permissions');
   });
@@ -349,14 +349,9 @@ describe.sequential('Auth y permisos', () => {
 
     adminToken = loginResponse.body.data.token;
 
-    const response = await request(app).get('/api/v1/admin/summary').set('Authorization', `Bearer ${adminToken}`).expect(200);
+    const response = await request(app).get('/api/v1/admin/companies').set('Authorization', `Bearer ${adminToken}`).expect(200);
 
-    expect(response.body.data).toMatchObject({
-      companies: expect.any(Number),
-      applications: expect.any(Number),
-      students: expect.any(Number),
-    });
-    expect(response.body.data.jobs.total).toEqual(expect.any(Number));
+    expect(Array.isArray(response.body.data)).toBe(true);
   });
 });
 
@@ -490,6 +485,10 @@ describe.sequential('Flujo de estudiante', () => {
 
     const response = await request(app).get('/api/v1/saved-jobs').set('Authorization', `Bearer ${studentToken}`).expect(200);
     expect(response.body.data).toEqual([]);
+  });
+
+  it('permite quitar una practica aunque ya no este guardada', async () => {
+    await request(app).delete(`/api/v1/saved-jobs/${jobSlug}`).set('Authorization', `Bearer ${studentToken}`).expect(204);
   });
 
   it('bloquea postulaciones sin token', async () => {

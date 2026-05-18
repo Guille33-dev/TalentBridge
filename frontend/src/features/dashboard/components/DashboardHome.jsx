@@ -5,7 +5,7 @@ import { Briefcase, Bookmark, FileText, TrendingUp, Clock } from 'lucide-react';
 import { Progress } from '@/shared/components/ui/progress';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { fetchMyApplications } from '@/features/applications/services/applicationsApi';
-import { fetchMySavedJobs } from '@/features/savedJobs/services/savedJobsApi';
+import { useSavedJobToggle } from '@/features/savedJobs/hooks/useSavedJobToggle';
 import { fetchJobs } from '@/features/jobs/services/jobsApi';
 import { fetchCompanies } from '@/features/companies/services/companiesApi';
 import { fetchMyProfile } from '@/features/profile/services/profileApi';
@@ -29,11 +29,11 @@ function getStatusClass(status) {
 export function DashboardHome({ onNavigate, onViewChange }) {
   const { user } = useAuth();
   const [applications, setApplications] = useState([]);
-  const [savedJobs, setSavedJobs] = useState([]);
   const [recommendedJobsData, setRecommendedJobsData] = useState([]);
   const [suggestedCompaniesData, setSuggestedCompaniesData] = useState([]);
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [error, setError] = useState(null);
+  const { savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
 
   useEffect(() => {
     let ignore = false;
@@ -42,9 +42,8 @@ export function DashboardHome({ onNavigate, onViewChange }) {
       setError(null);
 
       try {
-        const [applicationsResult, savedJobsResult, jobsResult, companiesResult, profileResult] = await Promise.all([
+        const [applicationsResult, jobsResult, companiesResult, profileResult] = await Promise.all([
           fetchMyApplications(),
-          fetchMySavedJobs(),
           fetchJobs({ limit: 2 }),
           fetchCompanies({ limit: 2 }),
           fetchMyProfile(),
@@ -52,7 +51,6 @@ export function DashboardHome({ onNavigate, onViewChange }) {
 
         if (!ignore) {
           setApplications(applicationsResult);
-          setSavedJobs(savedJobsResult);
           setRecommendedJobsData(jobsResult.jobs);
           setSuggestedCompaniesData(companiesResult.companies);
           setProfileCompletion(profileResult.profile?.profileCompletion || 0);
@@ -73,7 +71,7 @@ export function DashboardHome({ onNavigate, onViewChange }) {
   const completion = profileCompletion || user?.profile?.profileCompletion || 0;
   const statCards = [
     { id: 'applications', label: 'Postulaciones', value: String(applications.length), icon: FileText, iconClass: 'text-blue-600', bgClass: 'bg-blue-50' },
-    { id: 'saved', label: 'Guardadas', value: String(savedJobs.length), icon: Bookmark, iconClass: 'text-purple-600', bgClass: 'bg-purple-50' },
+    { id: 'saved', label: 'Guardadas', value: String(savedJobIds.length), icon: Bookmark, iconClass: 'text-purple-600', bgClass: 'bg-purple-50' },
     { id: 'process', label: 'En Proceso', value: String(inProcessCount), icon: Clock, iconClass: 'text-amber-600', bgClass: 'bg-amber-50' },
     { id: 'views', label: 'Perfil', value: `${completion}%`, icon: TrendingUp, iconClass: 'text-green-600', bgClass: 'bg-green-50' },
   ];
@@ -86,7 +84,7 @@ export function DashboardHome({ onNavigate, onViewChange }) {
         <p className="text-gray-600 text-sm sm:text-base">Aquí está el estado de tu búsqueda de prácticas</p>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{error}</div>}
+      {(error || savedJobsError) && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{error || savedJobsError}</div>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {statCards.map(({ id, label, value, icon: Icon, iconClass, bgClass }) => (
@@ -162,7 +160,14 @@ export function DashboardHome({ onNavigate, onViewChange }) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {recommendedJobsData.map((job) => (
-            <JobCard key={job.id} job={job} onViewDetails={(jobId) => onNavigate('job-detail', jobId)} />
+            <JobCard
+              key={job.id}
+              job={job}
+              isSaved={savedJobIds.includes(job.id)}
+              isSaveDisabled={savingJobId === job.id}
+              onToggleSave={toggleSavedJob}
+              onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
+            />
           ))}
         </div>
       </div>

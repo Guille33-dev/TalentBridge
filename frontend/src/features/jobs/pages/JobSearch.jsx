@@ -5,11 +5,10 @@ import { Footer } from '@/shared/components/layout/Footer';
 import { JobCard } from '@/shared/components/cards/JobCard';
 import { SearchFilters } from '@/features/jobs/components/SearchFilters';
 import { fetchJobs } from '@/features/jobs/services/jobsApi';
-import { deleteSavedJob, fetchMySavedJobs, saveJob } from '@/features/savedJobs/services/savedJobsApi';
+import { useSavedJobToggle } from '@/features/savedJobs/hooks/useSavedJobToggle';
 import { Search, MapPin, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
-import { getAuthToken } from '@/shared/services/apiClient';
 
 const PAGE_SIZE = 10;
 const emptyFilters = { search: '', location: '', modality: '', area: '', company: '', companyName: '' };
@@ -100,8 +99,7 @@ export function JobSearch({ onNavigate }) {
   const [pagination, setPagination] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [savedJobIds, setSavedJobIds] = useState([]);
-  const [savingJobId, setSavingJobId] = useState(null);
+  const { savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
 
   useEffect(() => {
     const nextState = readSearchState(searchParams);
@@ -152,40 +150,6 @@ export function JobSearch({ onNavigate }) {
     };
   }, [activeFilters, currentPage]);
 
-  useEffect(() => {
-    let ignore = false;
-
-    async function loadSavedJobs() {
-      if (!getAuthToken()) {
-        if (!ignore) setSavedJobIds([]);
-        return;
-      }
-
-      try {
-        const savedJobs = await fetchMySavedJobs();
-        if (!ignore) {
-          setSavedJobIds(savedJobs.map(({ job }) => job.id));
-        }
-      } catch {
-        if (!ignore) {
-          setSavedJobIds([]);
-        }
-      }
-    }
-
-    const handleWindowFocus = () => {
-      loadSavedJobs();
-    };
-
-    loadSavedJobs();
-    window.addEventListener('focus', handleWindowFocus);
-
-    return () => {
-      ignore = true;
-      window.removeEventListener('focus', handleWindowFocus);
-    };
-  }, []);
-
   const updateUrlFilters = (filters, page = 1) => {
     setSearchParams(buildSearchParams(filters, page));
   };
@@ -218,35 +182,6 @@ export function JobSearch({ onNavigate }) {
   const handlePageChange = (page) => {
     updateUrlFilters(activeFilters, page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleToggleSave = async (job) => {
-    if (!getAuthToken()) {
-      window.sessionStorage.setItem('talentbridge.pendingJob', job.slug || job.id);
-      onNavigate('login');
-      return;
-    }
-
-    setSavingJobId(job.id);
-    setError(null);
-
-    try {
-      if (savedJobIds.includes(job.id)) {
-        await deleteSavedJob(job.slug || job.id);
-        setSavedJobIds((current) => current.filter((savedJobId) => savedJobId !== job.id));
-      } else {
-        await saveJob(job.slug || job.id);
-        setSavedJobIds((current) => [...current, job.id]);
-      }
-    } catch (requestError) {
-      if (requestError.message.includes('already saved') || requestError.message.includes('ya esta guardada')) {
-        setSavedJobIds((current) => (current.includes(job.id) ? current : [...current, job.id]));
-      } else {
-        setError(requestError.message);
-      }
-    } finally {
-      setSavingJobId(null);
-    }
   };
 
   const handleSubmit = (event) => {
@@ -323,9 +258,9 @@ export function JobSearch({ onNavigate }) {
                 </div>
               )}
 
-              {error && (
+              {(error || savedJobsError) && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4 text-sm">
-                  {error}
+                  {error || savedJobsError}
                 </div>
               )}
 
@@ -348,7 +283,7 @@ export function JobSearch({ onNavigate }) {
                         job={job}
                         isSaved={savedJobIds.includes(job.id)}
                         isSaveDisabled={savingJobId === job.id}
-                        onToggleSave={handleToggleSave}
+                        onToggleSave={toggleSavedJob}
                         onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
                       />
                     ))}

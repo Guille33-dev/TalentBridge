@@ -101,7 +101,7 @@ export async function unsaveJob(userId: string, jobId: string) {
   });
 
   if (!savedJob) {
-    throw new HttpError(404, 'Saved job not found');
+    return;
   }
 
   await prisma.savedJob.delete({

@@ -50,7 +50,7 @@ export function SearchFilters({ filters, onFilterChange, onClear }) {
       <div className="space-y-6">
         {/* Filter Sections */}
         {filterSections.map((section) => (<div key={section.title} className="border-t border-gray-200 pt-6">
-            <button onClick={() => toggleSection(section.title)} className="w-full flex items-center justify-between mb-4 hover:text-teal-600 transition-colors">
+            <button onClick={() => toggleSection(section.title)} className="w-full flex items-center justify-between mb-4 hover:text-purple-600 transition-colors">
               <h3>{section.title}</h3>
               {expandedSections[section.title] ? (<ChevronUp className="w-4 h-4"/>) : (<ChevronDown className="w-4 h-4"/>)}
             </button>

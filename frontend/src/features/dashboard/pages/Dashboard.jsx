@@ -61,7 +61,7 @@ export function Dashboard({ onNavigate }) {
           <Menu className="w-6 h-6" />
         </button>
 
-        {sidebarOpen && <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={closeSidebar} />}
+        {sidebarOpen && <div className="lg:hidden fixed inset-0 bg-black/50 z-30 cursor-pointer" onClick={closeSidebar} />}
 
         <div
           className={`

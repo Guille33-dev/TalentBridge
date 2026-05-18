@@ -20,7 +20,7 @@ export function CompanyCard({ company, onNavigate }) {
         <button
           type="button"
           onClick={handleNavigateToCompany}
-          className="w-fit text-left text-xl mb-2 transition-colors hover:text-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+          className="w-fit text-left text-xl mb-2 transition-all duration-300 group-hover:text-purple-600 group-hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
         >
           {company.name}
         </button>

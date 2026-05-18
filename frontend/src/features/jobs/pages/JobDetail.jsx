@@ -188,16 +188,19 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
 
     try {
       if (isSaved) {
-        await deleteSavedJob(jobData.slug || jobData.id);
+        await deleteSavedJob(jobData.id);
         setIsSaved(false);
       } else {
         await saveJob(jobData.slug || jobData.id);
         setIsSaved(true);
       }
     } catch (requestError) {
-      setActionError(requestError.message);
-      if (requestError.message.includes('already saved') || requestError.message.includes('ya esta guardada')) {
+      if (requestError.message.includes('Saved job not found')) {
+        setIsSaved(false);
+      } else if (requestError.message.includes('already saved') || requestError.message.includes('ya esta guardada')) {
         setIsSaved(true);
+      } else {
+        setActionError(requestError.message);
       }
     } finally {
       setIsSaving(false);
