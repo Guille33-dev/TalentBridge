@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # TalentBridge
 
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
@@ -7,7 +6,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?logo=postgresql)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma)
 
-Plataforma web para conectar estudiantes con empresas que ofrecen practicas profesionales. Los estudiantes pueden buscar ofertas, guardar practicas, postularse y gestionar su perfil. La aplicacion tambien incluye un panel de administracion para gestionar empresas, vacantes y postulaciones.
+TalentBridge es una plataforma web para conectar estudiantes con empresas que ofrecen practicas profesionales. Los estudiantes pueden buscar practicas, guardar oportunidades, postularse y completar su perfil. Las empresas pueden registrarse, gestionar su perfil, publicar practicas y revisar candidaturas. El administrador controla empresas, practicas, postulaciones y mensajes de contacto.
 
 **Proyecto final - Desarrollo de Aplicaciones Web**
 
@@ -16,8 +15,11 @@ Plataforma web para conectar estudiantes con empresas que ofrecen practicas prof
 **Frontend**
 
 - React 18 + Vite 6
+- React Router DOM
 - JavaScript / JSX
-- Radix UI
+- Componentes UI basados en Radix UI
+- lucide-react
+- CSS en `frontend/src/shared/styles/index.css`
 
 **Backend**
 
@@ -26,40 +28,32 @@ Plataforma web para conectar estudiantes con empresas que ofrecen practicas prof
 - Prisma ORM
 - JWT para autenticacion
 - bcryptjs para contrasenas
+- helmet y express-rate-limit
+- Vitest + Supertest
 
 **Base de datos y despliegue**
 
 - Supabase PostgreSQL
-- Vercel para frontend y backend/API
+- Frontend en Vercel
+- Backend desplegado en Railway
 
 ## Instalacion
 
 ### 1. Clonar el repositorio
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
-cd ProyectofinalGit
+git clone https://github.com/Guille33-dev/TalentBridge.git
+cd TalentBridge
 ```
 
-### 2. Configurar la base de datos
-
-El proyecto usa **Supabase PostgreSQL**.
-
-1. Crea un proyecto en Supabase.
-2. Entra en `Project Settings` -> `Database`.
-3. Copia la connection string del **Session Pooler**.
-4. Usala en el `.env` del backend como `DATABASE_URL` y `DIRECT_URL`.
-
-> Se recomienda anadir `?sslmode=require` si la URL no lo incluye.
-
-### 3. Configurar el backend
+### 2. Configurar el backend
 
 ```bash
 cd backend
 npm install
 ```
 
-Crea un `.env` dentro de `backend/`:
+Crea `backend/.env`:
 
 ```env
 PORT=4000
@@ -84,28 +78,22 @@ Arranca el backend:
 npm run dev
 ```
 
-Backend en:
+Backend local:
 
 ```txt
 http://localhost:4000/api/v1
 ```
 
-Healthcheck:
+### 3. Configurar el frontend
 
-```txt
-http://localhost:4000/api/v1/health
-```
-
-### 4. Configurar el frontend
-
-Abre una nueva terminal:
+Abre otra terminal:
 
 ```bash
 cd frontend
 npm install
 ```
 
-Crea un `.env` dentro de `frontend/`:
+Crea `frontend/.env`:
 
 ```env
 VITE_API_URL=http://localhost:4000/api/v1
@@ -117,41 +105,52 @@ Arranca el frontend:
 npm run dev
 ```
 
-Frontend en:
+Frontend local:
 
 ```txt
 http://localhost:3000
 ```
 
-## Credenciales de prueba
-
-El seed crea un administrador de desarrollo:
-
-- **Email:** `admin@talentbridge.local`
-- **Contraseña:** `Admin12345`
-
-> Esta cuenta es solo para desarrollo. En produccion debe cambiarse o eliminarse.
-
-
 ## Funcionalidades
 
-- Home con practicas y empresas destacadas.
-- Buscador de practicas.
-- Filtros por texto, ubicacion, modalidad y area.
-- Catalogo de empresas.
-- Detalle completo de practica.
-- Detalle completo de empresa.
-- Registro y login con JWT.
+- Home con buscador, practicas destacadas y empresas destacadas.
+- Registro e inicio de sesion con JWT.
+- Registro diferenciado para estudiantes y empresas.
+- Politica de contrasenas: minimo 8 caracteres, numero, mayuscula, minuscula y caracter especial.
 - Dashboard privado para estudiantes.
-- Perfil editable.
-- Sistema de practicas guardadas.
-- Sistema de postulaciones.
-- Retirada de postulaciones.
-- Panel de administracion.
-- CRUD de empresas.
-- CRUD de practicas.
-- Gestion de estados de postulaciones.
-- Roles `STUDENT` y `ADMIN`.
+- Perfil de estudiante editable.
+- Practicas guardadas.
+- Postulaciones y retirada de postulaciones.
+- Listado y detalle de practicas.
+- Listado y detalle de empresas.
+- Portal de empresa para editar perfil, crear practicas y revisar candidatos.
+- Panel de administracion para empresas, practicas, postulaciones y mensajes de contacto.
+- Pagina de contacto con formulario.
+- Roles `STUDENT`, `COMPANY` y `ADMIN`.
+
+## Tests y validacion
+
+**Backend**
+
+```bash
+cd backend
+npm test
+npm run typecheck
+npm run build
+```
+
+Los tests backend cubren healthcheck, catalogo publico, filtros, paginacion, autenticacion, perfil de estudiante, practicas guardadas, postulaciones, permisos y acceso al panel admin.
+
+Para los tests se usa una base de datos separada mediante `backend/.env.test`. Ese archivo no debe subirse a Git.
+
+**Frontend**
+
+```bash
+cd frontend
+npm run build
+```
+
+El frontend se valida actualmente con build y pruebas manuales de los flujos principales.
 
 ## API principal
 
@@ -161,7 +160,7 @@ Base:
 /api/v1
 ```
 
-Endpoints publicos:
+Publico:
 
 ```txt
 GET /health
@@ -169,12 +168,14 @@ GET /jobs
 GET /jobs/:idOrSlug
 GET /companies
 GET /companies/:idOrSlug
+POST /contact/messages
 ```
 
 Autenticacion:
 
 ```txt
 POST /auth/register
+POST /auth/register-company
 POST /auth/login
 GET /users/me
 ```
@@ -192,10 +193,22 @@ POST /saved-jobs
 DELETE /saved-jobs/:jobId
 ```
 
+Empresa:
+
+```txt
+GET /company/me
+PATCH /company/me
+GET /company/jobs
+POST /company/jobs
+PATCH /company/jobs/:id
+DELETE /company/jobs/:id
+GET /company/applications
+PATCH /company/applications/:id
+```
+
 Admin:
 
 ```txt
-GET /admin/summary
 GET /admin/companies
 POST /admin/companies
 PATCH /admin/companies/:id
@@ -206,6 +219,8 @@ PATCH /admin/jobs/:id
 DELETE /admin/jobs/:id
 GET /admin/applications
 PATCH /admin/applications/:id
+GET /admin/contact-messages
+PATCH /admin/contact-messages/:id
 ```
 
 Los endpoints privados requieren:
@@ -216,24 +231,22 @@ Authorization: Bearer <JWT>
 
 ## Despliegue
 
-El despliegue recomendado es en **Vercel** usando dos proyectos:
+El proyecto usa Vercel para el frontend y Railway para el backend.
 
-- Uno para `backend/`.
-- Otro para `frontend/`.
+### Backend en Railway
 
-### Backend en Vercel
+Configuracion recomendada:
 
-Configuracion:
-
-- Root Directory: `backend`
+- Root Directory: `/backend`
 - Install Command: `npm install`
 - Build Command: `npm run build`
+- Start Command: `npm start`
 
 Variables de entorno:
 
 ```env
 NODE_ENV=production
-CORS_ORIGIN=https://tu-frontend.vercel.app
+CORS_ORIGIN=https://<DOMINIO_FRONTEND>
 DATABASE_URL="postgresql://..."
 DIRECT_URL="postgresql://..."
 JWT_SECRET="secreto_largo_y_seguro"
@@ -241,7 +254,7 @@ JWT_SECRET="secreto_largo_y_seguro"
 
 ### Frontend en Vercel
 
-Configuracion:
+Configuracion recomendada:
 
 - Root Directory: `frontend`
 - Install Command: `npm install`
@@ -251,25 +264,44 @@ Configuracion:
 Variable de entorno:
 
 ```env
-VITE_API_URL=https://tu-backend.vercel.app/api/v1
+VITE_API_URL=https://<DOMINIO_BACKEND>/api/v1
 ```
+
+En produccion todo debe funcionar mediante **HTTPS**. No uses `CORS_ORIGIN=*` en produccion.
+
+## Seguridad
+
+- Passwords cifradas con `bcryptjs`.
+- Autenticacion con JWT.
+- Rutas privadas protegidas con middleware.
+- Control de roles `STUDENT`, `COMPANY` y `ADMIN`.
+- CORS configurable por entorno.
+- `helmet` para cabeceras de seguridad.
+- Rate limit en login, registro y contacto.
+- Conexion a Supabase PostgreSQL con SSL.
+- Las credenciales reales y archivos `.env` no deben subirse al repositorio.
+
+## Limpieza del proyecto
+
+Las carpetas generadas no forman parte del codigo fuente:
+
+- `frontend/build`
+- `frontend/.vite`
+- `backend/dist`
+- `node_modules`
+
+Se regeneran con los comandos de desarrollo o build.
 
 ## Mejoras futuras
 
-- Portal especifico para empresas.
+- Tests automatizados de frontend.
 - Recuperacion de contrasena por email.
 - Login con Google.
 - Notificaciones.
-- Rutas reales con `react-router-dom`.
-- Sistema de seguimiento de empresas.
-- Tests automatizados de frontend y backend.
-- Mejoras visuales y responsive del panel admin.
+
 
 ## Autor
 
-**Guillermo José Suárez López**
+**Guillermo Jose Suarez Lopez**
 
-2º Desarrollo de Aplicaciones Web
-=======
-# TalentBridge
->>>>>>> 2a788911cba1050ca0bb1bf79da00fbcc584f41b
+2 DAW - Desarrollo de Aplicaciones Web

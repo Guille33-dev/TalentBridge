@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, MapPin } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+
+const heroImages = [
+    'https://res.cloudinary.com/dahfnhc1h/image/upload/v1779908404/foto3_eqgmcs.avif',
+    'https://res.cloudinary.com/dahfnhc1h/image/upload/v1779908404/foto2_lgrkoc.avif',
+    'https://res.cloudinary.com/dahfnhc1h/image/upload/v1779908404/foto5_rri8cv.avif',
+    'https://res.cloudinary.com/dahfnhc1h/image/upload/v1779908404/foto4_pt0bpa.avif',
+    'https://res.cloudinary.com/dahfnhc1h/image/upload/v1779908404/foto1_tafwvk.avif',
+    'https://res.cloudinary.com/dahfnhc1h/image/upload/v1779908404/foto6_c53p4d.avif',
+];
 
 const popularSearches = [
     { label: 'Producto', category: 'PRODUCT' },
@@ -14,6 +23,28 @@ const popularSearches = [
 export function HeroSection({ onNavigate }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
+
+    useEffect(() => {
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) return undefined;
+
+        const interval = window.setInterval(() => {
+            setIsTransitionEnabled(true);
+            setCurrentSlide((slide) => slide + 1);
+        }, 4000);
+
+        return () => window.clearInterval(interval);
+    }, []);
+
+    const handleSlideTransitionEnd = () => {
+        if (currentSlide < heroImages.length) return;
+
+        setIsTransitionEnabled(false);
+        setCurrentSlide(0);
+    };
+
     const handleSearch = () => {
         onNavigate('jobs', undefined, {
             filters: {
@@ -30,8 +61,33 @@ export function HeroSection({ onNavigate }) {
             },
         });
     };
-    return (<section className="bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-600 text-white py-12 sm:py-16 md:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    const sliderImages = [...heroImages, heroImages[0]];
+
+    return (<section className="tb-hero text-white py-12 sm:py-16 md:py-20">
+      <div className="tb-hero__slider" aria-hidden="true">
+        <div
+          className="tb-hero__track"
+          style={{
+            transform: `translateX(-${currentSlide * 100}%)`,
+            transition: isTransitionEnabled ? 'transform 850ms ease-in-out' : 'none',
+          }}
+          onTransitionEnd={handleSlideTransitionEnd}
+        >
+          {sliderImages.map((imageUrl, index) => (
+            <img
+              key={`${imageUrl}-${index}`}
+              src={imageUrl}
+              alt=""
+              className="tb-hero__image"
+              loading={index === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          ))}
+        </div>
+      </div>
+      <div className="tb-hero__overlay" aria-hidden="true" />
+
+      <div className="tb-hero__content max-w-7xl mx-auto px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 sm:mb-6">
             Encuentra tu práctica ideal

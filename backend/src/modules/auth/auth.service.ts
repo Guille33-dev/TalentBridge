@@ -28,6 +28,8 @@ type LoginBody = {
 };
 
 const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_REQUIREMENTS_MESSAGE =
+  'La contrasena debe tener minimo 8 caracteres, un numero, una mayuscula, una minuscula y un caracter especial';
 const TOKEN_EXPIRES_IN = '7d';
 const NEW_COMPANY_DESCRIPTION = 'Perfil pendiente de completar por la empresa.';
 
@@ -48,12 +50,12 @@ function getJwtSecret() {
 
 function getRequiredString(value: unknown, field: string) {
   if (typeof value !== 'string') {
-    throw new HttpError(400, `${field} is required`);
+    throw new HttpError(400, `${field} es obligatorio`);
   }
 
   const trimmed = value.trim();
   if (!trimmed) {
-    throw new HttpError(400, `${field} is required`);
+    throw new HttpError(400, `${field} es obligatorio`);
   }
 
   return trimmed;
@@ -63,7 +65,7 @@ function normalizeEmail(value: unknown) {
   const email = getRequiredString(value, 'email').toLowerCase();
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new HttpError(400, 'Invalid email');
+    throw new HttpError(400, 'El correo electronico no es valido');
   }
 
   return email;
@@ -72,8 +74,14 @@ function normalizeEmail(value: unknown) {
 function validatePassword(value: unknown) {
   const password = getRequiredString(value, 'password');
 
-  if (password.length < PASSWORD_MIN_LENGTH) {
-    throw new HttpError(400, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`);
+  const hasMinimumLength = password.length >= PASSWORD_MIN_LENGTH;
+  const hasNumber = /\d/.test(password);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasSpecialCharacter = /[^A-Za-z0-9]/.test(password);
+
+  if (!hasMinimumLength || !hasNumber || !hasUppercase || !hasLowercase || !hasSpecialCharacter) {
+    throw new HttpError(400, PASSWORD_REQUIREMENTS_MESSAGE);
   }
 
   return password;
@@ -135,7 +143,7 @@ export async function registerStudent(body: RegisterBody) {
   });
 
   if (existingUser) {
-    throw new HttpError(409, 'Email already registered');
+    throw new HttpError(409, 'Este correo electronico ya esta registrado');
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -176,7 +184,7 @@ export async function registerCompany(body: RegisterCompanyBody) {
   const companyTaxId = getRequiredString(body.companyTaxId, 'companyTaxId').toUpperCase();
 
   if (body.acceptTerms !== true) {
-    throw new HttpError(400, 'Terms and privacy must be accepted');
+    throw new HttpError(400, 'Debes aceptar los terminos y la politica de privacidad');
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -185,7 +193,7 @@ export async function registerCompany(body: RegisterCompanyBody) {
   });
 
   if (existingUser) {
-    throw new HttpError(409, 'Email already registered');
+    throw new HttpError(409, 'Este correo electronico ya esta registrado');
   }
 
   const baseSlug = slugify(companyName);
@@ -197,7 +205,7 @@ export async function registerCompany(body: RegisterCompanyBody) {
   });
 
   if (existingCompany) {
-    throw new HttpError(409, existingCompany.taxId === companyTaxId ? 'Company tax ID already registered' : 'Company slug already exists');
+    throw new HttpError(409, existingCompany.taxId === companyTaxId ? 'Este CIF/NIF ya esta registrado' : 'Ya existe una empresa con este nombre');
   }
 
   const passwordHash = await bcrypt.hash(password, 12);

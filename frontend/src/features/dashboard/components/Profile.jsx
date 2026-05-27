@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Mail, Phone, MapPin, Briefcase, GraduationCap, Edit } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
@@ -18,6 +18,8 @@ function formatYear(value) {
 export function Profile() {
     const [profileData, setProfileData] = useState(null);
     const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
         university: '',
         major: '',
         semester: '',
@@ -32,10 +34,14 @@ export function Profile() {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    const formRef = useRef(null);
+    const firstInputRef = useRef(null);
 
     const syncForm = (data) => {
         const profile = data?.profile || {};
         setFormData({
+            firstName: data?.firstName || '',
+            lastName: data?.lastName || '',
             university: profile.university || '',
             major: profile.major || '',
             semester: profile.semester || '',
@@ -83,6 +89,15 @@ export function Profile() {
         setSuccessMessage(null);
     };
 
+    useEffect(() => {
+        if (!isEditing) return;
+
+        window.requestAnimationFrame(() => {
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            firstInputRef.current?.focus({ preventScroll: true });
+        });
+    }, [isEditing]);
+
     const handleCancel = () => {
         syncForm(profileData);
         setIsEditing(false);
@@ -98,6 +113,8 @@ export function Profile() {
 
         try {
             const updatedProfile = await updateMyProfile({
+                firstName: formData.firstName,
+                lastName: formData.lastName,
                 university: formData.university,
                 major: formData.major,
                 semester: formData.semester,
@@ -133,12 +150,12 @@ export function Profile() {
     const skills = profile.skills?.length ? profile.skills : [];
 
     return (<div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl mb-2">Mi Perfil</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl mb-2">Mi Perfil</h1>
           <p className="text-gray-600">Gestiona tu información personal y preferencias</p>
         </div>
-        <Button onClick={handleEdit} className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button onClick={handleEdit} className="w-full bg-purple-600 hover:bg-purple-700 text-white sm:w-auto">
           <Edit className="w-4 h-4 mr-2"/>
           Editar Perfil
         </Button>
@@ -148,54 +165,65 @@ export function Profile() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm" role="alert">{error}</div>}
 
       {isEditing && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+        <form ref={formRef} onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-6">
           <div>
             <h2 className="text-xl mb-1">Editar perfil</h2>
             <p className="text-sm text-gray-600">Actualiza la información que verán las empresas cuando revisen tu postulación.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="profile-university" className="mb-2 block">Centro Educativo o Universidad</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="profile-first-name" className="block leading-5">Nombre</Label>
+              <Input ref={firstInputRef} id="profile-first-name" value={formData.firstName} onChange={(event) => handleChange('firstName', event.target.value)} placeholder="Nombre" />
+            </div>
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="profile-last-name" className="block leading-5">Apellidos</Label>
+              <Input id="profile-last-name" value={formData.lastName} onChange={(event) => handleChange('lastName', event.target.value)} placeholder="Apellidos" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="profile-university" className="block leading-5">Centro Educativo o Universidad</Label>
               <Input id="profile-university" value={formData.university} onChange={(event) => handleChange('university', event.target.value)} placeholder="IES, centro educativo o universidad" />
             </div>
-            <div>
-              <Label htmlFor="profile-major" className="mb-2 block">Estudios</Label>
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="profile-major" className="block leading-5">Estudios</Label>
               <Input id="profile-major" value={formData.major} onChange={(event) => handleChange('major', event.target.value)} placeholder="Desarrollo de Aplicaciones Web" />
             </div>
-            <div>
-              <Label htmlFor="profile-semester" className="mb-2 block">Año</Label>
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="profile-semester" className="block leading-5">Año</Label>
               <Input id="profile-semester" value={formData.semester} onChange={(event) => handleChange('semester', event.target.value)} placeholder="2º año" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="profile-phone" className="mb-2 block">Teléfono</Label>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="profile-phone" className="block leading-5">Teléfono</Label>
               <Input id="profile-phone" value={formData.phone} onChange={(event) => handleChange('phone', event.target.value)} placeholder="+34 600 000 000" />
             </div>
-            <div>
-              <Label htmlFor="profile-location" className="mb-2 block">Ubicación</Label>
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="profile-location" className="block leading-5">Ubicación</Label>
               <Input id="profile-location" value={formData.location} onChange={(event) => handleChange('location', event.target.value)} placeholder="Madrid" />
             </div>
-            <div>
-              <Label htmlFor="profile-availability" className="mb-2 block">Disponibilidad</Label>
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="profile-availability" className="block leading-5">Disponibilidad</Label>
               <Input id="profile-availability" value={formData.availability} onChange={(event) => handleChange('availability', event.target.value)} placeholder="4-6 meses" />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="profile-skills" className="mb-2 block">Habilidades</Label>
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="profile-skills" className="block leading-5">Habilidades</Label>
             <Input id="profile-skills" value={formData.skills} onChange={(event) => handleChange('skills', event.target.value)} placeholder="React, Node.js, SQL" />
-            <p className="text-xs text-gray-500 mt-1">Separalas con comas.</p>
+            <p className="text-xs text-gray-500 mt-2">Separalas con comas.</p>
           </div>
 
-          <div>
-            <Label htmlFor="profile-bio" className="mb-2 block">Bio</Label>
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="profile-bio" className="block leading-5">Bio</Label>
             <Textarea id="profile-bio" value={formData.bio} onChange={(event) => handleChange('bio', event.target.value)} placeholder="Cuenta brevemente qué tipo de prácticas buscas." />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Button type="submit" disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white">
               {isSaving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
@@ -207,7 +235,7 @@ export function Profile() {
       )}
 
       {/* Profile Completeness */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg">Completitud del Perfil</h3>
           <span className="text-purple-600">{completion}%</span>
@@ -223,20 +251,20 @@ export function Profile() {
       </div>
 
       {/* Basic Information */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl">Información Básica</h2>
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
+          <Button variant="outline" size="icon" onClick={handleEdit} aria-label="Editar informacion basica" className="h-9 w-9 rounded-lg">
             <Edit className="w-4 h-4"/>
           </Button>
         </div>
 
-        <div className="flex gap-6 mb-6">
-          <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl">
+        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:gap-6">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl flex-shrink-0">
             {initials}
           </div>
-          <div className="flex-1">
-            <h3 className="text-2xl mb-2">{fullName || 'Estudiante TalentBridge'}</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-xl sm:text-2xl mb-2 break-words">{fullName || 'Estudiante TalentBridge'}</h3>
             <p className="text-gray-600 mb-4">{profile.major || 'Completa tus estudios'} {profile.university ? `· ${profile.university}` : ''}</p>
             {skills.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -281,19 +309,19 @@ export function Profile() {
       </div>
 
       {/* Education */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl">Educación</h2>
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
+          <Button variant="outline" size="icon" onClick={handleEdit} aria-label="Editar educacion" className="h-9 w-9 rounded-lg">
             <Edit className="w-4 h-4"/>
           </Button>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
           <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
             <GraduationCap className="w-6 h-6 text-gray-600"/>
           </div>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <h3 className="mb-1">{profile.major || 'Estudios no especificados'}</h3>
             <p className="text-gray-600 mb-2">{profile.university || 'Centro educativo o universidad no especificado'}</p>
             <p className="text-sm text-gray-500 mb-2">{formatYear(profile.semester)}</p>
@@ -303,10 +331,10 @@ export function Profile() {
       </div>
 
       {/* Skills */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl">Habilidades</h2>
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
+          <Button variant="outline" size="icon" onClick={handleEdit} aria-label="Editar habilidades" className="h-9 w-9 rounded-lg">
             <Edit className="w-4 h-4"/>
           </Button>
         </div>

@@ -130,6 +130,12 @@ function toCsv(value) {
   return Array.isArray(value) ? value.join(', ') : value || '';
 }
 
+function getTodayInputDate() {
+  const today = new Date();
+  today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+  return today.toISOString().slice(0, 10);
+}
+
 function AdminTabs({ activeTab, onChange }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -208,6 +214,7 @@ export function AdminPanel({ onNavigate }) {
   const [profileApplication, setProfileApplication] = useState(null);
 
   const isAdmin = user?.role === 'ADMIN';
+  const minApplicationDeadline = useMemo(() => getTodayInputDate(), []);
 
   async function loadAdminData() {
     setError(null);
@@ -512,7 +519,7 @@ export function AdminPanel({ onNavigate }) {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header onNavigate={onNavigate} currentPage="admin" />
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="tb-panel-shell flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl mb-1">Panel de administración</h1>
@@ -826,6 +833,7 @@ export function AdminPanel({ onNavigate }) {
                     <Input
                       id="job-applicationDeadline"
                       type="date"
+                      min={minApplicationDeadline}
                       value={jobForm.applicationDeadline}
                       onChange={(event) => handleJobChange('applicationDeadline', event.target.value)}
                     />

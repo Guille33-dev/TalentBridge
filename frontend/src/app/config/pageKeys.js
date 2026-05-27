@@ -16,5 +16,3 @@ export const pageKeys = {
   terms: 'terms',
   cookies: 'cookies',
 };
-
-export const defaultPage = pageKeys.home;

@@ -199,7 +199,7 @@ export function Header({ onNavigate, currentPage = 'home' }) {
                     )}
                     <Button onClick={() => handleNavigate(user?.role === 'COMPANY' ? 'company-dashboard' : 'dashboard')} className="w-full bg-purple-600 hover:bg-purple-700 text-white justify-center">
                       {user?.role === 'COMPANY' ? <Building2 className="w-4 h-4 mr-2"/> : <User className="w-4 h-4 mr-2"/>}
-                      {user?.role === 'COMPANY' ? 'Panel empresa' : 'Dashboard'}
+                      {user?.role === 'COMPANY' ? 'Panel empresa' : user?.firstName || 'Mi panel'}
                     </Button>
                     <Button variant="outline" className="w-full justify-center" onClick={handleLogout}>
                       <LogOut className="w-4 h-4 mr-2"/>

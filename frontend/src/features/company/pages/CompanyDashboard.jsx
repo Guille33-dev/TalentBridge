@@ -110,6 +110,12 @@ function toCsv(value) {
   return Array.isArray(value) ? value.join(', ') : value || '';
 }
 
+function getTodayInputDate() {
+  const today = new Date();
+  today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+  return today.toISOString().slice(0, 10);
+}
+
 function Field({ id, label, children }) {
   return (
     <div>
@@ -226,6 +232,7 @@ export function CompanyDashboard({ onNavigate }) {
   const [success, setSuccess] = useState(null);
 
   const isCompanyUser = user?.role === 'COMPANY';
+  const minApplicationDeadline = useMemo(() => getTodayInputDate(), []);
   const stats = useMemo(
     () => ({
       published: jobs.filter((job) => job.status === 'OPEN').length,
@@ -369,7 +376,7 @@ export function CompanyDashboard({ onNavigate }) {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header onNavigate={onNavigate} currentPage="company-dashboard" />
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="tb-panel-shell flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl mb-1">Panel de empresa</h1>
@@ -623,7 +630,7 @@ export function CompanyDashboard({ onNavigate }) {
                     <Input id="portal-job-startDate" placeholder="Septiembre 2026" value={jobForm.startDate} onChange={(event) => handleJobChange('startDate', event.target.value)} />
                   </Field>
                   <Field id="portal-job-deadline" label="Fecha límite de postulación">
-                    <Input id="portal-job-deadline" type="date" value={jobForm.applicationDeadline} onChange={(event) => handleJobChange('applicationDeadline', event.target.value)} />
+                    <Input id="portal-job-deadline" type="date" min={minApplicationDeadline} value={jobForm.applicationDeadline} onChange={(event) => handleJobChange('applicationDeadline', event.target.value)} />
                   </Field>
                 </div>
               </FormBlock>

@@ -181,9 +181,23 @@ function getOptionalDate(value: unknown, field: string) {
     throw new HttpError(400, `${field} must be a date string`);
   }
 
-  const date = new Date(value);
+  const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) {
     throw new HttpError(400, `${field} must be a valid date`);
+  }
+
+  return date;
+}
+
+function getOptionalFutureDate(value: unknown, field: string) {
+  const date = getOptionalDate(value, field);
+  if (!date) return undefined;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (date < today) {
+    throw new HttpError(400, 'La fecha limite de postulacion no puede ser anterior a hoy');
   }
 
   return date;
@@ -321,7 +335,7 @@ function buildJobCreateData(body: AdminJobBody): Prisma.JobUncheckedCreateInput 
     salaryLabel: getOptionalString(body.salaryLabel, 'salaryLabel'),
     schedule: getOptionalString(body.schedule, 'schedule'),
     startDate: getOptionalString(body.startDate, 'startDate'),
-    applicationDeadline: getOptionalDate(body.applicationDeadline, 'applicationDeadline'),
+    applicationDeadline: getOptionalFutureDate(body.applicationDeadline, 'applicationDeadline'),
     openings: getOptionalInt(body.openings, 'openings') || 1,
     applicantsCount: getOptionalInt(body.applicantsCount, 'applicantsCount') || 0,
     tags: getOptionalStringArray(body.tags, 'tags') || [],
@@ -351,7 +365,7 @@ function buildJobUpdateData(body: AdminJobBody): Prisma.JobUncheckedUpdateInput 
 
   if (body.modality !== undefined) data.modality = getEnumValue(JobModality, body.modality, 'modality') as JobModality;
   if (body.status !== undefined) data.status = getEnumValue(JobStatus, body.status, 'status') as JobStatus;
-  if (body.applicationDeadline !== undefined) data.applicationDeadline = getOptionalDate(body.applicationDeadline, 'applicationDeadline');
+  if (body.applicationDeadline !== undefined) data.applicationDeadline = getOptionalFutureDate(body.applicationDeadline, 'applicationDeadline');
   if (body.openings !== undefined) data.openings = getOptionalInt(body.openings, 'openings');
   if (body.applicantsCount !== undefined) data.applicantsCount = getOptionalInt(body.applicantsCount, 'applicantsCount');
   if (body.tags !== undefined) data.tags = getOptionalStringArray(body.tags, 'tags') || [];

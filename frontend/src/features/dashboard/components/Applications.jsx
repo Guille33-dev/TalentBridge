@@ -5,6 +5,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger, } from "@/shared/components/ui/tabs";
 import { fetchMyApplications, withdrawApplication } from "@/features/applications/services/applicationsApi";
+import { ImageWithFallback } from "@/shared/components/media/ImageWithFallback";
 
 const statusLabels = {
     SUBMITTED: "Postulación Enviada",
@@ -115,7 +116,7 @@ export function Applications({ onNavigate }) {
 
     return (<div className="space-y-6">
       <div>
-        <h1 className="text-3xl mb-2">Mis Postulaciones</h1>
+        <h1 className="text-2xl sm:text-3xl mb-2">Mis Postulaciones</h1>
         <p className="text-gray-600">
           {applications.length} postulaciones totales
         </p>
@@ -135,28 +136,28 @@ export function Applications({ onNavigate }) {
 
         <TabsContent value="active" className="mt-6 space-y-4">
           {normalizedActiveApps.length === 0 && <div className="bg-white rounded-xl border border-gray-200 p-6 text-gray-600">Todavía no tienes postulaciones activas.</div>}
-          {normalizedActiveApps.map((app) => (<div key={app.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
-              <div className="flex gap-4">
+          {normalizedActiveApps.map((app) => (<div key={app.id} className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+              <div className="flex flex-col gap-4 sm:flex-row">
                 <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                  <img src={app.job.company.logo} alt={app.job.company.name} className="w-full h-full object-cover"/>
+                  <ImageWithFallback src={app.job.company.logo} alt={app.job.company.name} className="w-full h-full object-cover"/>
                 </div>
 
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-xl mb-1">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl mb-1 break-words leading-snug">
                         {app.job.title}
                       </h3>
                       <p className="text-gray-600">
                         {app.job.company.name}
                       </p>
                     </div>
-                    <Badge className={getStatusColor(statusTypes[app.status])}>
+                    <Badge className={`${getStatusColor(statusTypes[app.status])} w-fit flex-shrink-0`}>
                       {statusLabels[app.status] || app.status}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-4 sm:gap-6">
                     <span>Postulado: {formatDate(app.createdAt)}</span>
                   </div>
 
@@ -169,14 +170,14 @@ export function Applications({ onNavigate }) {
                       </div>
                     </div>)}
 
-                  <div className="flex gap-3">
-                    <Button variant="outline" size="sm" onClick={() => handleViewApplication(app.job)}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <Button variant="outline" size="sm" onClick={() => handleViewApplication(app.job)} className="w-full sm:w-auto">
                       Ver Postulación
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setContactApplication(app)}>
+                    <Button variant="outline" size="sm" onClick={() => setContactApplication(app)} className="w-full sm:w-auto">
                       Contactar Reclutador
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleWithdraw(app.id)}>
+                    <Button variant="outline" size="sm" onClick={() => handleWithdraw(app.id)} className="w-full sm:w-auto">
                       Retirar
                     </Button>
                   </div>
@@ -187,28 +188,28 @@ export function Applications({ onNavigate }) {
 
         <TabsContent value="archived" className="mt-6 space-y-4">
           {normalizedArchivedApps.length === 0 && <div className="bg-white rounded-xl border border-gray-200 p-6 text-gray-600">No hay postulaciones archivadas.</div>}
-          {normalizedArchivedApps.map((app) => (<div key={app.id} className="bg-white rounded-xl border border-gray-200 p-6 opacity-60">
-              <div className="flex gap-4">
+          {normalizedArchivedApps.map((app) => (<div key={app.id} className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 opacity-60">
+              <div className="flex flex-col gap-4 sm:flex-row">
                 <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                  <img src={app.job.company.logo} alt={app.job.company.name} className="w-full h-full object-cover"/>
+                  <ImageWithFallback src={app.job.company.logo} alt={app.job.company.name} className="w-full h-full object-cover"/>
                 </div>
 
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-xl mb-1">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl mb-1 break-words leading-snug">
                         {app.job.title}
                       </h3>
                       <p className="text-gray-600">
                         {app.job.company.name}
                       </p>
                     </div>
-                    <Badge className={getStatusColor(statusTypes[app.status])}>
+                    <Badge className={`${getStatusColor(statusTypes[app.status])} w-fit flex-shrink-0`}>
                       {statusLabels[app.status] || app.status}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center gap-6 text-sm text-gray-600">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 sm:gap-6">
                     <span>Postulado: {formatDate(app.createdAt)}</span>
                   </div>
                 </div>

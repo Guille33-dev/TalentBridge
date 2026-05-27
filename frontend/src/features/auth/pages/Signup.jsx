@@ -12,6 +12,8 @@ import { Footer } from '@/shared/components/layout/Footer';
 
 const STUDENT_TYPE = 'student';
 const COMPANY_TYPE = 'company';
+const PASSWORD_REQUIREMENTS_MESSAGE =
+  'La contrasena debe tener minimo 8 caracteres, un numero, una mayuscula, una minuscula y un caracter especial.';
 
 const emptyFormData = {
   firstName: '',
@@ -26,8 +28,112 @@ const emptyFormData = {
   companyTaxId: '',
 };
 
+const fieldLabels = {
+  firstName: 'El nombre',
+  lastName: 'Los apellidos',
+  email: 'El correo electronico',
+  password: 'La contrasena',
+  confirmPassword: 'La confirmacion de contrasena',
+  companyName: 'El nombre de la empresa',
+  contactName: 'La persona de contacto',
+  companyLocation: 'La ubicacion',
+  companyIndustry: 'El sector de la empresa',
+  companyTaxId: 'El CIF/NIF de empresa',
+  terms: 'Los terminos y la politica de privacidad',
+};
+
 function getAccountType(searchParams) {
   return searchParams.get('tipo') === 'empresa' ? COMPANY_TYPE : STUDENT_TYPE;
+}
+
+function isBlank(value) {
+  return !String(value || '').trim();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+
+function getPasswordValidationError(password) {
+  const checks = [
+    password.length >= 8,
+    /\d/.test(password),
+    /[A-Z]/.test(password),
+    /[a-z]/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ];
+
+  return checks.every(Boolean) ? null : PASSWORD_REQUIREMENTS_MESSAGE;
+}
+
+function ErrorMessage({ id, children }) {
+  if (!children) return null;
+
+  return (
+    <p id={id} className="mt-2 text-xs text-red-600" role="alert">
+      {children}
+    </p>
+  );
+}
+
+function buildValidationErrors(formData, isCompany, acceptTerms) {
+  const errors = {};
+  const requiredFields = isCompany
+    ? ['companyName', 'email', 'password', 'confirmPassword', 'contactName', 'companyIndustry', 'companyTaxId', 'companyLocation']
+    : ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
+
+  requiredFields.forEach((field) => {
+    if (isBlank(formData[field])) {
+      errors[field] = `${fieldLabels[field]} es obligatorio.`;
+    }
+  });
+
+  if (!errors.email && !isValidEmail(formData.email)) {
+    errors.email = 'Introduce un correo electronico valido.';
+  }
+
+  if (!errors.password) {
+    const passwordError = getPasswordValidationError(formData.password);
+    if (passwordError) {
+      errors.password = passwordError;
+    }
+  }
+
+  if (!errors.confirmPassword && formData.password !== formData.confirmPassword) {
+    errors.confirmPassword = 'Las contrasenas no coinciden.';
+  }
+
+  if (!acceptTerms) {
+    errors.terms = 'Debes aceptar los terminos y la politica de privacidad.';
+  }
+
+  return errors;
+}
+
+function mapRegisterError(message) {
+  const normalized = String(message || '').toLowerCase();
+
+  if (normalized.includes('correo') || normalized.includes('email')) {
+    return { field: 'email', message: normalized.includes('registrado') ? 'Este correo electronico ya esta registrado.' : 'Introduce un correo electronico valido.' };
+  }
+
+  if (normalized.includes('contrasena') || normalized.includes('password')) {
+    return { field: 'password', message: PASSWORD_REQUIREMENTS_MESSAGE };
+  }
+
+  if (normalized.includes('cif') || normalized.includes('nif') || normalized.includes('tax')) {
+    return { field: 'companyTaxId', message: 'Este CIF/NIF ya esta registrado.' };
+  }
+
+  if (normalized.includes('empresa') || normalized.includes('slug')) {
+    return { field: 'companyName', message: 'Ya existe una empresa con este nombre.' };
+  }
+
+  if (normalized.includes('terminos') || normalized.includes('privacy') || normalized.includes('terms')) {
+    return { field: 'terms', message: 'Debes aceptar los terminos y la politica de privacidad.' };
+  }
+
+  return { field: null, message: message || 'No se pudo crear la cuenta. Revisa los datos e intentalo de nuevo.' };
 }
 
 export function Signup({ onNavigate, onSwitchToLogin }) {
@@ -40,7 +146,8 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [formError, setFormError] = useState(null);
 
   const isCompany = accountType === COMPANY_TYPE;
 
@@ -59,12 +166,31 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
 
   const handleAccountTypeChange = (type) => {
     setAccountType(type);
-    setError(null);
+    setFieldErrors({});
+    setFormError(null);
     setSearchParams(type === COMPANY_TYPE ? { tipo: 'empresa' } : {});
   };
 
   const handleChange = (field, value) => {
     setFormData((current) => ({ ...current, [field]: value }));
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setFormError(null);
+  };
+
+  const handleTermsChange = (checked) => {
+    setAcceptTerms(Boolean(checked));
+    setFieldErrors((current) => {
+      if (!current.terms) return current;
+      const next = { ...current };
+      delete next.terms;
+      return next;
+    });
+    setFormError(null);
   };
 
   const navigateToLegalPage = (page) => {
@@ -74,15 +200,12 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError(null);
+    setFieldErrors({});
+    setFormError(null);
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      return;
-    }
-
-    if (!acceptTerms) {
-      setError('Debes aceptar los términos y la política de privacidad');
+    const validationErrors = buildValidationErrors(formData, isCompany, acceptTerms);
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
       return;
     }
 
@@ -105,7 +228,12 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
         onNavigate(pageKeys.dashboard);
       }
     } catch (requestError) {
-      setError(requestError.message);
+      const mappedError = mapRegisterError(requestError.message);
+      if (mappedError.field) {
+        setFieldErrors({ [mappedError.field]: mappedError.message });
+      } else {
+        setFormError(mappedError.message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -208,8 +336,7 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-            {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm" role="alert">{error}</div>}
+          <form onSubmit={handleSubmit} noValidate className="space-y-4 sm:space-y-5">
 
             {isCompany ? (
               <div>
@@ -226,9 +353,12 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                     value={formData.companyName}
                     onChange={(event) => handleChange('companyName', event.target.value)}
                     className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base"
+                    aria-invalid={Boolean(fieldErrors.companyName)}
+                    aria-describedby={fieldErrors.companyName ? 'companyName-error' : undefined}
                     required
                   />
                 </div>
+                <ErrorMessage id="companyName-error">{fieldErrors.companyName}</ErrorMessage>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -246,13 +376,16 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                       value={formData.firstName}
                       onChange={(event) => handleChange('firstName', event.target.value)}
                       className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base"
+                      aria-invalid={Boolean(fieldErrors.firstName)}
+                      aria-describedby={fieldErrors.firstName ? 'firstName-error' : undefined}
                       required
                     />
                   </div>
+                  <ErrorMessage id="firstName-error">{fieldErrors.firstName}</ErrorMessage>
                 </div>
                 <div>
                   <Label htmlFor="lastName" className="mb-2 block text-sm sm:text-base">
-                    Apellido
+                    Apellidos
                   </Label>
                     <Input
                       id="lastName"
@@ -262,8 +395,11 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                     value={formData.lastName}
                     onChange={(event) => handleChange('lastName', event.target.value)}
                     className="h-11 sm:h-12 text-sm sm:text-base"
+                    aria-invalid={Boolean(fieldErrors.lastName)}
+                    aria-describedby={fieldErrors.lastName ? 'lastName-error' : undefined}
                     required
                   />
+                  <ErrorMessage id="lastName-error">{fieldErrors.lastName}</ErrorMessage>
                 </div>
               </div>
             )}
@@ -282,9 +418,12 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                   value={formData.email}
                   onChange={(event) => handleChange('email', event.target.value)}
                   className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base"
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                   required
                 />
               </div>
+              <ErrorMessage id="email-error">{fieldErrors.email}</ErrorMessage>
               <p className="text-xs text-gray-500 mt-1">
                 {isCompany ? 'Usa un correo profesional de la empresa' : 'Usa tu correo universitario preferentemente'}
               </p>
@@ -304,6 +443,8 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                   value={formData.password}
                   onChange={(event) => handleChange('password', event.target.value)}
                   className="pl-10 sm:pl-11 pr-10 sm:pr-11 h-11 sm:h-12 text-sm sm:text-base"
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  aria-describedby={fieldErrors.password ? 'password-help password-error' : 'password-help'}
                   required
                 />
                 <button
@@ -316,6 +457,10 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                   {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
               </div>
+              <p id="password-help" className="mt-2 text-xs text-gray-500">
+                Minimo 8 caracteres, un numero, una mayuscula, una minuscula y un caracter especial.
+              </p>
+              <ErrorMessage id="password-error">{fieldErrors.password}</ErrorMessage>
             </div>
 
             <div>
@@ -332,6 +477,8 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                   value={formData.confirmPassword}
                   onChange={(event) => handleChange('confirmPassword', event.target.value)}
                   className="pl-10 sm:pl-11 pr-10 sm:pr-11 h-11 sm:h-12 text-sm sm:text-base"
+                  aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                  aria-describedby={fieldErrors.confirmPassword ? 'confirmPassword-error' : undefined}
                   required
                 />
                 <button
@@ -344,6 +491,7 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                   {showConfirmPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
               </div>
+              <ErrorMessage id="confirmPassword-error">{fieldErrors.confirmPassword}</ErrorMessage>
             </div>
 
             {isCompany && (
@@ -362,9 +510,12 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                       value={formData.contactName}
                       onChange={(event) => handleChange('contactName', event.target.value)}
                       className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base"
+                      aria-invalid={Boolean(fieldErrors.contactName)}
+                      aria-describedby={fieldErrors.contactName ? 'contactName-error' : undefined}
                       required
                     />
                   </div>
+                  <ErrorMessage id="contactName-error">{fieldErrors.contactName}</ErrorMessage>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -377,6 +528,8 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                       value={formData.companyIndustry}
                       onChange={(event) => handleChange('companyIndustry', event.target.value)}
                       className="flex h-11 sm:h-12 w-full rounded-md border border-input bg-input-background px-3 py-2 text-sm sm:text-base text-gray-900 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                      aria-invalid={Boolean(fieldErrors.companyIndustry)}
+                      aria-describedby={fieldErrors.companyIndustry ? 'companyIndustry-error' : undefined}
                       required
                     >
                       <option value="">Selecciona un sector</option>
@@ -391,6 +544,7 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                       <option value="Energía">Energía</option>
                       <option value="Otro">Otro</option>
                     </select>
+                    <ErrorMessage id="companyIndustry-error">{fieldErrors.companyIndustry}</ErrorMessage>
                   </div>
                   <div>
                     <Label htmlFor="companyTaxId" className="mb-2 block text-sm sm:text-base">
@@ -404,8 +558,11 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                       value={formData.companyTaxId}
                       onChange={(event) => handleChange('companyTaxId', event.target.value)}
                       className="h-11 sm:h-12 text-sm sm:text-base"
+                      aria-invalid={Boolean(fieldErrors.companyTaxId)}
+                      aria-describedby={fieldErrors.companyTaxId ? 'companyTaxId-error' : undefined}
                       required
                     />
+                    <ErrorMessage id="companyTaxId-error">{fieldErrors.companyTaxId}</ErrorMessage>
                   </div>
                 </div>
 
@@ -423,15 +580,18 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                       value={formData.companyLocation}
                       onChange={(event) => handleChange('companyLocation', event.target.value)}
                       className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base"
+                      aria-invalid={Boolean(fieldErrors.companyLocation)}
+                      aria-describedby={fieldErrors.companyLocation ? 'companyLocation-error' : undefined}
                       required
                     />
                   </div>
+                  <ErrorMessage id="companyLocation-error">{fieldErrors.companyLocation}</ErrorMessage>
                 </div>
               </div>
             )}
 
             <div className="flex items-start space-x-2">
-              <Checkbox id="terms" checked={acceptTerms} onCheckedChange={(checked) => setAcceptTerms(Boolean(checked))} className="mt-1" />
+              <Checkbox id="terms" checked={acceptTerms} onCheckedChange={handleTermsChange} className="mt-1" aria-invalid={Boolean(fieldErrors.terms)} aria-describedby={fieldErrors.terms ? 'terms-error' : undefined} />
               <p className="text-xs sm:text-sm leading-relaxed">
                 Acepto los{' '}
                 <button type="button" onClick={() => navigateToLegalPage(pageKeys.terms)} className="text-purple-600 hover:text-purple-700">
@@ -444,8 +604,11 @@ export function Signup({ onNavigate, onSwitchToLogin }) {
                 {isCompany && ' y entiendo que el perfil de empresa será revisado antes de publicarse.'}
               </p>
             </div>
+            <ErrorMessage id="terms-error">{fieldErrors.terms}</ErrorMessage>
 
-            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white h-11 sm:h-12 text-sm sm:text-base" disabled={!acceptTerms || isSubmitting}>
+            {formError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm" role="alert">{formError}</div>}
+
+            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white h-11 sm:h-12 text-sm sm:text-base" disabled={isSubmitting}>
               {isSubmitting ? 'Creando cuenta...' : isCompany ? 'Crear cuenta de empresa' : 'Crear cuenta'}
             </Button>
 
