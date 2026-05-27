@@ -27,6 +27,7 @@ export function mapJobToCard(job) {
     companyId: job.company?.id,
     companySlug: job.company?.slug,
     companyLogo: job.company?.logo,
+    category: job.category,
     location: job.location,
     type: job.duration || job.modality,
     salary: job.salaryLabel || 'No especificado',

@@ -7,7 +7,7 @@ import { ChevronRight } from 'lucide-react';
 export function FeaturedJobs({ onNavigate }) {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
+  const { canSaveJobs, savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
 
   useEffect(() => {
     let ignore = false;
@@ -37,7 +37,7 @@ export function FeaturedJobs({ onNavigate }) {
   }, []);
 
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-gray-50">
+    <section className="tb-home-section tb-home-section--soft">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
           <div>
@@ -62,14 +62,15 @@ export function FeaturedJobs({ onNavigate }) {
           </div>
         ) : jobs.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {savedJobsError && <div className="lg:col-span-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{savedJobsError}</div>}
+            {canSaveJobs && savedJobsError && <div className="lg:col-span-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm" role="alert">{savedJobsError}</div>}
             {jobs.map((job) => (
               <JobCard
                 key={job.id}
                 job={job}
                 isSaved={savedJobIds.includes(job.id)}
                 isSaveDisabled={savingJobId === job.id}
-                onToggleSave={toggleSavedJob}
+                onToggleSave={canSaveJobs ? toggleSavedJob : undefined}
+                showSaveButton={canSaveJobs}
                 onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
               />
             ))}

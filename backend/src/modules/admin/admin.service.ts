@@ -1,10 +1,11 @@
-import { ApplicationStatus, JobModality, JobStatus, Prisma } from '@prisma/client';
+import { ApplicationStatus, CompanyStatus, ContactMessageStatus, JobCategory, JobModality, JobStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { HttpError } from '../../shared/errors/httpError';
 
 type AdminCompanyBody = {
   name?: unknown;
   slug?: unknown;
+  status?: unknown;
   logo?: unknown;
   banner?: unknown;
   tagline?: unknown;
@@ -26,6 +27,7 @@ type AdminJobBody = {
   slug?: unknown;
   description?: unknown;
   overview?: unknown;
+  category?: unknown;
   location?: unknown;
   modality?: unknown;
   duration?: unknown;
@@ -35,7 +37,6 @@ type AdminJobBody = {
   applicationDeadline?: unknown;
   openings?: unknown;
   applicantsCount?: unknown;
-  featured?: unknown;
   tags?: unknown;
   responsibilities?: unknown;
   requirements?: unknown;
@@ -49,7 +50,19 @@ type AdminApplicationBody = {
   nextStep?: unknown;
 };
 
+type AdminContactMessageBody = {
+  status?: unknown;
+};
+
 const adminCompanyInclude = {
+  owner: {
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+    },
+  },
   _count: {
     select: {
       jobs: true,
@@ -162,15 +175,6 @@ function getOptionalInt(value: unknown, field: string) {
   return parsed;
 }
 
-function getOptionalBoolean(value: unknown, field: string) {
-  if (value === undefined || value === null || value === '') return undefined;
-  if (typeof value === 'boolean') return value;
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-
-  throw new HttpError(400, `${field} must be a boolean`);
-}
-
 function getOptionalDate(value: unknown, field: string) {
   if (value === undefined || value === null || value === '') return undefined;
   if (typeof value !== 'string') {
@@ -220,6 +224,10 @@ function serializeApplication(application: Prisma.ApplicationGetPayload<{ includ
   return application;
 }
 
+function serializeContactMessage<T>(message: T) {
+  return message;
+}
+
 async function ensureCompanyExists(companyId: string) {
   const company = await prisma.company.findUnique({
     where: { id: companyId },
@@ -240,6 +248,7 @@ function buildCompanyCreateData(body: AdminCompanyBody): Prisma.CompanyCreateInp
     name,
     slug,
     description,
+    status: (getEnumValue(CompanyStatus, body.status || CompanyStatus.APPROVED, 'status') as CompanyStatus) || CompanyStatus.APPROVED,
     logo: getOptionalString(body.logo, 'logo'),
     banner: getOptionalString(body.banner, 'banner'),
     tagline: getOptionalString(body.tagline, 'tagline'),
@@ -271,6 +280,10 @@ function buildCompanyUpdateData(body: AdminCompanyBody): Prisma.CompanyUpdateInp
     data.description = getRequiredString(body.description, 'description');
   }
 
+  if (body.status !== undefined) {
+    data.status = getEnumValue(CompanyStatus, body.status, 'status') as CompanyStatus;
+  }
+
   for (const field of optionalFields) {
     if (body[field] !== undefined) {
       data[field] = getOptionalString(body[field], field);
@@ -290,6 +303,7 @@ function buildJobCreateData(body: AdminJobBody): Prisma.JobUncheckedCreateInput 
   const companyId = getRequiredString(body.companyId, 'companyId');
   const description = getRequiredString(body.description, 'description');
   const location = getRequiredString(body.location, 'location');
+  const category = getEnumValue(JobCategory, body.category || JobCategory.DEVELOPMENT, 'category') as JobCategory;
   const modality = getEnumValue(JobModality, body.modality || JobModality.HYBRID, 'modality') as JobModality;
   const status = getEnumValue(JobStatus, body.status || JobStatus.OPEN, 'status') as JobStatus;
 
@@ -299,6 +313,7 @@ function buildJobCreateData(body: AdminJobBody): Prisma.JobUncheckedCreateInput 
     slug: getOptionalString(body.slug, 'slug') || slugify(`${title}-${Date.now()}`),
     description,
     location,
+    category,
     modality,
     status,
     overview: getOptionalString(body.overview, 'overview'),
@@ -309,7 +324,6 @@ function buildJobCreateData(body: AdminJobBody): Prisma.JobUncheckedCreateInput 
     applicationDeadline: getOptionalDate(body.applicationDeadline, 'applicationDeadline'),
     openings: getOptionalInt(body.openings, 'openings') || 1,
     applicantsCount: getOptionalInt(body.applicantsCount, 'applicantsCount') || 0,
-    featured: getOptionalBoolean(body.featured, 'featured') || false,
     tags: getOptionalStringArray(body.tags, 'tags') || [],
     responsibilities: getOptionalStringArray(body.responsibilities, 'responsibilities') || [],
     requirements: getOptionalStringArray(body.requirements, 'requirements') || [],
@@ -326,6 +340,7 @@ function buildJobUpdateData(body: AdminJobBody): Prisma.JobUncheckedUpdateInput 
   if (body.title !== undefined) data.title = getRequiredString(body.title, 'title');
   if (body.slug !== undefined) data.slug = getRequiredString(body.slug, 'slug');
   if (body.description !== undefined) data.description = getRequiredString(body.description, 'description');
+  if (body.category !== undefined) data.category = getEnumValue(JobCategory, body.category, 'category') as JobCategory;
   if (body.location !== undefined) data.location = getRequiredString(body.location, 'location');
 
   for (const field of optionalStringFields) {
@@ -339,7 +354,6 @@ function buildJobUpdateData(body: AdminJobBody): Prisma.JobUncheckedUpdateInput 
   if (body.applicationDeadline !== undefined) data.applicationDeadline = getOptionalDate(body.applicationDeadline, 'applicationDeadline');
   if (body.openings !== undefined) data.openings = getOptionalInt(body.openings, 'openings');
   if (body.applicantsCount !== undefined) data.applicantsCount = getOptionalInt(body.applicantsCount, 'applicantsCount');
-  if (body.featured !== undefined) data.featured = getOptionalBoolean(body.featured, 'featured');
   if (body.tags !== undefined) data.tags = getOptionalStringArray(body.tags, 'tags') || [];
   if (body.responsibilities !== undefined) data.responsibilities = getOptionalStringArray(body.responsibilities, 'responsibilities') || [];
   if (body.requirements !== undefined) data.requirements = getOptionalStringArray(body.requirements, 'requirements') || [];
@@ -508,6 +522,37 @@ export async function updateAdminApplication(applicationId: string, body: AdminA
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       throw new HttpError(404, 'Application not found');
+    }
+
+    throw error;
+  }
+}
+
+export async function listAdminContactMessages() {
+  const messages = await prisma.contactMessage.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return messages.map(serializeContactMessage);
+}
+
+export async function updateAdminContactMessage(messageId: string, body: AdminContactMessageBody) {
+  const status = getEnumValue(ContactMessageStatus, body.status, 'status') as ContactMessageStatus | undefined;
+
+  if (!status) {
+    throw new HttpError(400, 'status is required');
+  }
+
+  try {
+    const message = await prisma.contactMessage.update({
+      where: { id: messageId },
+      data: { status },
+    });
+
+    return serializeContactMessage(message);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      throw new HttpError(404, 'Contact message not found');
     }
 
     throw error;

@@ -14,15 +14,19 @@ const filterSections = [
         ],
     },
     {
-        key: 'area',
-        title: 'Área de Estudio',
+        key: 'category',
+        title: 'Categoría',
         options: [
-            { label: 'Ingeniería', value: 'Ingenieria' },
-            { label: 'Diseño', value: 'Diseno' },
-            { label: 'Marketing', value: 'Marketing' },
-            { label: 'Desarrollo', value: 'Desarrollo' },
-            { label: 'Cloud', value: 'Cloud' },
-            { label: 'Producto', value: 'Producto' },
+            { label: 'Desarrollo', value: 'DEVELOPMENT' },
+            { label: 'Diseño UX/UI', value: 'DESIGN' },
+            { label: 'Marketing', value: 'MARKETING' },
+            { label: 'Datos', value: 'DATA' },
+            { label: 'Producto', value: 'PRODUCT' },
+            { label: 'Cloud / DevOps', value: 'CLOUD_DEVOPS' },
+            { label: 'Ciberseguridad', value: 'CYBERSECURITY' },
+            { label: 'Testing / QA', value: 'QA' },
+            { label: 'Contenido', value: 'CONTENT' },
+            { label: 'Operaciones', value: 'OPERATIONS' },
         ],
     },
 ];
@@ -30,7 +34,7 @@ const filterSections = [
 export function SearchFilters({ filters, onFilterChange, onClear }) {
     const [expandedSections, setExpandedSections] = useState({
         'Modalidad': true,
-        'Área de Estudio': true
+        'Categoría': true
     });
 
     const toggleSection = (title) => {

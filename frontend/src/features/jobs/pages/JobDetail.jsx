@@ -64,7 +64,7 @@ function ListSection({ title, icon: Icon, items }) {
 }
 
 export function JobDetail({ jobId, onNavigate, onBack }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const [jobData, setJobData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -74,11 +74,15 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
   const [isApplying, setIsApplying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [shareStatus, setShareStatus] = useState('idle');
+  const isStudent = user?.role === 'STUDENT';
+  const canUseStudentActions = !isAuthLoading && (!isAuthenticated || isStudent);
 
   useEffect(() => {
     let ignore = false;
 
     async function loadJob() {
+      if (isAuthLoading) return;
+
       if (!jobId) {
         setError('No se encontró la práctica seleccionada');
         setIsLoading(false);
@@ -93,10 +97,11 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
       setShareStatus('idle');
 
       try {
+        const shouldLoadStudentState = isAuthenticated && isStudent;
         const [job, applications, savedJobs] = await Promise.all([
           fetchJob(jobId),
-          isAuthenticated ? fetchMyApplications() : Promise.resolve([]),
-          isAuthenticated ? fetchMySavedJobs() : Promise.resolve([]),
+          shouldLoadStudentState ? fetchMyApplications() : Promise.resolve([]),
+          shouldLoadStudentState ? fetchMySavedJobs() : Promise.resolve([]),
         ]);
         if (!ignore) {
           setJobData(job);
@@ -120,7 +125,7 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
     return () => {
       ignore = true;
     };
-  }, [jobId, isAuthenticated]);
+  }, [jobId, isAuthenticated, isAuthLoading, isStudent]);
 
   const getShareUrl = () => {
     const url = new URL(`/practicas/${jobData.slug || jobData.id}`, window.location.origin);
@@ -128,6 +133,8 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
   };
 
   const handleShare = async () => {
+    if (!canUseStudentActions) return;
+
     setActionError(null);
 
     try {
@@ -154,6 +161,8 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
   };
 
   const handleApply = async () => {
+    if (!canUseStudentActions) return;
+
     if (!isAuthenticated) {
       window.sessionStorage.setItem('talentbridge.pendingJob', jobData.slug || jobData.id);
       onNavigate('login');
@@ -177,6 +186,8 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
   };
 
   const handleSave = async () => {
+    if (!canUseStudentActions) return;
+
     if (!isAuthenticated) {
       window.sessionStorage.setItem('talentbridge.pendingJob', jobData.slug || jobData.id);
       onNavigate('login');
@@ -321,35 +332,39 @@ export function JobDetail({ jobId, onNavigate, onBack }) {
 
               <div className="lg:col-span-1">
                 <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 lg:sticky lg:top-24 space-y-4">
-                  {hasApplied ? (
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-                      <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 mx-auto mb-3" />
-                      <h3 className="text-base sm:text-lg text-green-900 mb-2">Postulación enviada</h3>
-                      <p className="text-xs sm:text-sm text-green-700">Tu postulación ha sido enviada correctamente.</p>
-                    </div>
-                  ) : (
-                    <Button onClick={handleApply} disabled={isApplying} className="w-full bg-purple-600 hover:bg-purple-700 text-white h-11 sm:h-12 text-sm sm:text-base">
-                      {isApplying ? 'Enviando postulación...' : 'Postularme ahora'}
-                    </Button>
+                  {canUseStudentActions && (
+                    <>
+                      {hasApplied ? (
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                          <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 mx-auto mb-3" />
+                          <h3 className="text-base sm:text-lg text-green-900 mb-2">Postulación enviada</h3>
+                          <p className="text-xs sm:text-sm text-green-700">Tu postulación ha sido enviada correctamente.</p>
+                        </div>
+                      ) : (
+                        <Button onClick={handleApply} disabled={isApplying} className="w-full bg-purple-600 hover:bg-purple-700 text-white h-11 sm:h-12 text-sm sm:text-base">
+                          {isApplying ? 'Enviando postulación...' : 'Postularme ahora'}
+                        </Button>
+                      )}
+
+                      {actionError && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3" role="alert">{actionError}</p>}
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={handleSave}
+                          disabled={isSaving}
+                          className={`flex-1 text-xs sm:text-sm h-10 sm:h-auto ${isSaved ? 'bg-purple-50 text-purple-700 border-purple-600' : ''}`}
+                        >
+                          <Bookmark className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${isSaved ? 'fill-current' : ''}`} />
+                          {isSaving ? 'Guardando...' : isSaved ? 'Guardado' : 'Guardar'}
+                        </Button>
+                        <Button variant="outline" onClick={handleShare} className="flex-1 text-xs sm:text-sm h-10 sm:h-auto">
+                          <Share2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          {shareStatus === 'copied' ? 'Copiado' : shareStatus === 'shared' ? 'Compartido' : 'Compartir'}
+                        </Button>
+                      </div>
+                    </>
                   )}
-
-                  {actionError && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{actionError}</p>}
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      className={`flex-1 text-xs sm:text-sm h-10 sm:h-auto ${isSaved ? 'bg-purple-50 text-purple-700 border-purple-600' : ''}`}
-                    >
-                      <Bookmark className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${isSaved ? 'fill-current' : ''}`} />
-                      {isSaving ? 'Guardando...' : isSaved ? 'Guardado' : 'Guardar'}
-                    </Button>
-                    <Button variant="outline" onClick={handleShare} className="flex-1 text-xs sm:text-sm h-10 sm:h-auto">
-                      <Share2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                      {shareStatus === 'copied' ? 'Copiado' : shareStatus === 'shared' ? 'Compartido' : 'Compartir'}
-                    </Button>
-                  </div>
 
                   <div className="pt-4 sm:pt-6 border-t border-gray-200">
                     <h3 className="text-xs sm:text-sm mb-3 sm:mb-4 text-gray-500">Sobre la empresa</h3>

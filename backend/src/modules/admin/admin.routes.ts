@@ -9,9 +9,11 @@ import {
   deleteAdminJob,
   listAdminApplications,
   listAdminCompanies,
+  listAdminContactMessages,
   listAdminJobs,
   updateAdminApplication,
   updateAdminCompany,
+  updateAdminContactMessage,
   updateAdminJob,
 } from './admin.service';
 
@@ -96,5 +98,21 @@ adminRouter.patch(
   asyncHandler(async (req, res) => {
     const application = await updateAdminApplication(req.params.id, req.body);
     res.json({ data: application });
+  }),
+);
+
+adminRouter.get(
+  '/contact-messages',
+  asyncHandler(async (_req, res) => {
+    const messages = await listAdminContactMessages();
+    res.json({ data: messages });
+  }),
+);
+
+adminRouter.patch(
+  '/contact-messages/:id',
+  asyncHandler(async (req, res) => {
+    const message = await updateAdminContactMessage(req.params.id, req.body);
+    res.json({ data: message });
   }),
 );

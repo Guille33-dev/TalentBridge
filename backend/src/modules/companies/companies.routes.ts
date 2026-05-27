@@ -10,6 +10,7 @@ companiesRouter.get(
   asyncHandler(async (req, res) => {
     const result = await listCompanies({
       search: getStringQuery(req.query.search),
+      category: getStringQuery(req.query.category),
       page: getNumberQuery(req.query.page, 1, { min: 1 }),
       limit: getNumberQuery(req.query.limit, 20, { min: 1, max: 100 }),
     });

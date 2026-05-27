@@ -4,11 +4,11 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 
 const popularSearches = [
-    { label: 'Producto', search: 'Producto' },
-    { label: 'Desarrollo', search: 'Desarrollo' },
-    { label: 'Diseño', search: 'Diseno' },
-    { label: 'DevOps', search: 'DevOps' },
-    { label: 'Cloud', search: 'Cloud' },
+    { label: 'Producto', category: 'PRODUCT' },
+    { label: 'Desarrollo', category: 'DEVELOPMENT' },
+    { label: 'Diseño', category: 'DESIGN' },
+    { label: 'DevOps', category: 'CLOUD_DEVOPS' },
+    { label: 'Datos', category: 'DATA' },
 ];
 
 export function HeroSection({ onNavigate }) {
@@ -25,7 +25,7 @@ export function HeroSection({ onNavigate }) {
     const handlePopularSearch = (term) => {
         onNavigate('jobs', undefined, {
             filters: {
-                search: term.search,
+                category: term.category,
                 location: location.trim(),
             },
         });
@@ -37,7 +37,7 @@ export function HeroSection({ onNavigate }) {
             Encuentra tu práctica ideal
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-purple-100 mb-8 sm:mb-12 px-4">
-            Conectamos estudiantes universitarios con empresas que buscan talento joven. Inicia tu carrera profesional.
+            Conectamos estudiantes con empresas que buscan talento joven. Inicia tu carrera profesional.
           </p>
 
           {/* Search Bar */}
@@ -58,7 +58,7 @@ export function HeroSection({ onNavigate }) {
           {/* Popular Searches */}
           <div className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-2 sm:gap-3 px-4">
             <span className="text-purple-100 text-xs sm:text-sm">Popular:</span>
-            {popularSearches.map((term) => (<button key={term.search} onClick={() => handlePopularSearch(term)} className="px-3 sm:px-4 py-1 sm:py-1.5 bg-white/10 hover:bg-white/20 rounded-full text-xs sm:text-sm transition-colors backdrop-blur-sm">
+            {popularSearches.map((term) => (<button key={term.category} onClick={() => handlePopularSearch(term)} className="px-3 sm:px-4 py-1 sm:py-1.5 bg-white/10 hover:bg-white/20 rounded-full text-xs sm:text-sm transition-colors backdrop-blur-sm">
                 {term.label}
               </button>))}
           </div>

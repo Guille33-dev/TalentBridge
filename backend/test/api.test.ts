@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ApplicationStatus, JobModality, JobStatus, UserRole } from '@prisma/client';
+import { ApplicationStatus, CompanyStatus, JobCategory, JobModality, JobStatus, UserRole } from '@prisma/client';
 import { app } from '../src/app';
 import { prisma } from '../src/config/prisma';
 
@@ -15,9 +15,17 @@ const companySlug = `tb-test-company-${runId}`;
 const jobSlug = `tb-test-job-${runId}`;
 const secondCompanySlug = `tb-test-company-secondary-${runId}`;
 const secondJobSlug = `tb-test-job-secondary-${runId}`;
+const companyUserEmail = `company.${runId}${testEmailDomain}`;
+const companyUserPassword = 'CompanyTest123';
+const companyApplicantEmail = `company.applicant.${runId}${testEmailDomain}`;
+const companyPortalSlug = `tb-test-company-portal-${runId}`;
+const companyPortalJobSlug = `tb-test-company-job-${runId}`;
 
 let studentToken = '';
 let adminToken = '';
+let companyToken = '';
+let companyPortalId = '';
+let companyPortalJobId = '';
 let secondJobId = '';
 let otherApplicationId = '';
 
@@ -71,6 +79,7 @@ async function createPublicCatalogData() {
       slug: jobSlug,
       title: `Practicas QA Test ${runId}`,
       description: 'Oferta temporal creada para validar los endpoints publicos.',
+      category: JobCategory.QA,
       location: 'Sevilla',
       modality: JobModality.HYBRID,
       status: JobStatus.OPEN,
@@ -96,6 +105,7 @@ async function createPublicCatalogData() {
       slug: secondJobSlug,
       title: `Practicas Backend Test ${runId}`,
       description: 'Segunda oferta temporal creada para validar filtros y paginacion.',
+      category: JobCategory.DEVELOPMENT,
       location: 'Madrid',
       modality: JobModality.REMOTE,
       status: JobStatus.OPEN,
@@ -193,6 +203,26 @@ describe.sequential('API basica', () => {
     });
   });
 
+  it('filtra empresas por el nombre escrito en el buscador', async () => {
+    const response = await request(app).get('/api/v1/companies').query({ search: `Filter Company ${runId}` }).expect(200);
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      slug: secondCompanySlug,
+      name: `TalentBridge Filter Company ${runId}`,
+    });
+  });
+
+  it('filtra empresas por sector sin mezclarlo con el texto de busqueda', async () => {
+    const response = await request(app).get('/api/v1/companies').query({ search: `${runId}`, category: 'Producto' }).expect(200);
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      slug: secondCompanySlug,
+      name: `TalentBridge Filter Company ${runId}`,
+    });
+  });
+
   it('devuelve el detalle publico de una empresa', async () => {
     const response = await request(app).get(`/api/v1/companies/${companySlug}`).expect(200);
 
@@ -216,6 +246,36 @@ describe.sequential('API basica', () => {
 
   it('filtra practicas por modalidad', async () => {
     const response = await request(app).get('/api/v1/jobs').query({ modality: 'remote', search: `${runId}` }).expect(200);
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      slug: secondJobSlug,
+      modality: JobModality.REMOTE,
+    });
+  });
+
+  it('filtra practicas por categoria', async () => {
+    const response = await request(app).get('/api/v1/jobs').query({ category: 'QA', search: `${runId}` }).expect(200);
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      slug: jobSlug,
+      category: JobCategory.QA,
+    });
+  });
+
+  it('interpreta el area escrita en el buscador de practicas como categoria', async () => {
+    const response = await request(app).get('/api/v1/jobs').query({ search: 'desarrollo', company: secondCompanySlug }).expect(200);
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      slug: secondJobSlug,
+      category: JobCategory.DEVELOPMENT,
+    });
+  });
+
+  it('interpreta remoto en ubicacion como modalidad remota', async () => {
+    const response = await request(app).get('/api/v1/jobs').query({ location: 'remoto', search: `${runId}` }).expect(200);
 
     expect(response.body.data).toHaveLength(1);
     expect(response.body.data[0]).toMatchObject({
@@ -352,6 +412,260 @@ describe.sequential('Auth y permisos', () => {
     const response = await request(app).get('/api/v1/admin/companies').set('Authorization', `Bearer ${adminToken}`).expect(200);
 
     expect(Array.isArray(response.body.data)).toBe(true);
+  });
+});
+
+describe.sequential('Flujo de empresa', () => {
+  it('exige CIF/NIF y aceptacion legal en el registro de empresa', async () => {
+    const missingTaxIdResponse = await request(app)
+      .post('/api/v1/auth/register-company')
+      .send({
+        email: companyUserEmail,
+        password: companyUserPassword,
+        contactName: 'Company Owner',
+        companyName: `TB Test Company Portal ${runId}`,
+        companyLocation: 'Sevilla',
+        companyIndustry: 'Testing',
+        acceptTerms: true,
+      })
+      .expect(400);
+
+    expect(missingTaxIdResponse.body.error.message).toBe('companyTaxId is required');
+
+    const termsResponse = await request(app)
+      .post('/api/v1/auth/register-company')
+      .send({
+        email: companyUserEmail,
+        password: companyUserPassword,
+        contactName: 'Company Owner',
+        companyName: `TB Test Company Portal ${runId}`,
+        companyLocation: 'Sevilla',
+        companyIndustry: 'Testing',
+        companyTaxId: `B-${runId}`,
+        acceptTerms: false,
+      })
+      .expect(400);
+
+    expect(termsResponse.body.error.message).toBe('Terms and privacy must be accepted');
+  });
+
+  it('registra una empresa pendiente de aprobacion', async () => {
+    const response = await request(app)
+      .post('/api/v1/auth/register-company')
+      .send({
+        email: companyUserEmail,
+        password: companyUserPassword,
+        contactName: 'Company Owner',
+        companyName: `TB Test Company Portal ${runId}`,
+        companyLocation: 'Sevilla',
+        companyIndustry: 'Testing',
+        companyTaxId: `B-${runId}`,
+        acceptTerms: true,
+      })
+      .expect(201);
+
+    companyToken = response.body.data.token;
+    companyPortalId = response.body.data.user.company.id;
+
+    expect(response.body.data.user).toMatchObject({
+      email: companyUserEmail,
+      role: UserRole.COMPANY,
+      company: {
+        status: CompanyStatus.PENDING,
+        taxId: `B-${runId}`.toUpperCase(),
+      },
+    });
+  });
+
+  it('devuelve el perfil propio de empresa', async () => {
+    const response = await request(app).get('/api/v1/company/me').set('Authorization', `Bearer ${companyToken}`).expect(200);
+
+    expect(response.body.data).toMatchObject({
+      id: companyPortalId,
+      status: CompanyStatus.PENDING,
+    });
+  });
+
+  it('bloquea las funciones de estudiante para cuentas de empresa', async () => {
+    await request(app).get('/api/v1/profile/me').set('Authorization', `Bearer ${companyToken}`).expect(403);
+    await request(app).get('/api/v1/saved-jobs').set('Authorization', `Bearer ${companyToken}`).expect(403);
+    await request(app).post('/api/v1/saved-jobs').set('Authorization', `Bearer ${companyToken}`).send({ jobId: jobSlug }).expect(403);
+    await request(app).get('/api/v1/applications/me').set('Authorization', `Bearer ${companyToken}`).expect(403);
+    await request(app).post('/api/v1/applications').set('Authorization', `Bearer ${companyToken}`).send({ jobId: jobSlug }).expect(403);
+  });
+
+  it('permite actualizar el perfil propio de empresa', async () => {
+    const response = await request(app)
+      .patch('/api/v1/company/me')
+      .set('Authorization', `Bearer ${companyToken}`)
+      .send({
+        name: `TB Test Company Portal ${runId}`,
+        description: 'Descripcion actualizada desde el panel de empresa.',
+        tagline: 'Empresa de test para practicas',
+        tags: ['Testing', 'Empresa'],
+      })
+      .expect(200);
+
+    expect(response.body.data).toMatchObject({
+      id: companyPortalId,
+      description: 'Descripcion actualizada desde el panel de empresa.',
+      tags: ['Testing', 'Empresa'],
+    });
+  });
+
+  it('crea una practica propia pendiente de revision', async () => {
+    const response = await request(app)
+      .post('/api/v1/company/jobs')
+      .set('Authorization', `Bearer ${companyToken}`)
+      .send({
+        title: `Practica Empresa Test ${runId}`,
+        slug: companyPortalJobSlug,
+        description: 'Practica creada por una empresa para validar el panel.',
+        location: 'Remoto',
+        modality: JobModality.REMOTE,
+        category: JobCategory.DATA,
+        duration: '3 meses',
+        salaryLabel: '600 EUR/mes',
+      })
+      .expect(201);
+
+    companyPortalJobId = response.body.data.id;
+
+    expect(response.body.data).toMatchObject({
+      slug: companyPortalJobSlug,
+      status: JobStatus.PENDING_REVIEW,
+      category: JobCategory.DATA,
+    });
+  });
+
+  it('no permite que una empresa publique directamente una practica', async () => {
+    const response = await request(app)
+      .patch(`/api/v1/company/jobs/${companyPortalJobId}`)
+      .set('Authorization', `Bearer ${companyToken}`)
+      .send({ status: JobStatus.OPEN })
+      .expect(400);
+
+    expect(response.body.error.message).toBe('Las empresas no pueden publicar practicas directamente');
+  });
+
+  it('oculta la empresa pendiente y sus practicas en la parte publica', async () => {
+    const companyResponse = await request(app).get(`/api/v1/companies/${companyPortalId}`).expect(404);
+    const jobResponse = await request(app).get(`/api/v1/jobs/${companyPortalJobSlug}`).expect(404);
+
+    expect(companyResponse.body.error.message).toBe('Company not found');
+    expect(jobResponse.body.error.message).toBe('Job not found');
+  });
+
+  it('permite al admin aprobar empresa y publicar practica', async () => {
+    await request(app)
+      .patch(`/api/v1/admin/companies/${companyPortalId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: CompanyStatus.APPROVED })
+      .expect(200);
+
+    await request(app)
+      .patch(`/api/v1/admin/jobs/${companyPortalJobId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: JobStatus.OPEN })
+      .expect(200);
+
+    const response = await request(app).get(`/api/v1/jobs/${companyPortalJobSlug}`).expect(200);
+
+    expect(response.body.data).toMatchObject({
+      slug: companyPortalJobSlug,
+      status: JobStatus.OPEN,
+      company: {
+        status: CompanyStatus.APPROVED,
+      },
+    });
+  });
+
+  it('permite a la empresa revisar el perfil del candidato de una postulacion propia', async () => {
+    const passwordHash = await bcrypt.hash('CompanyApplicantTest123', 12);
+    const applicant = await prisma.user.create({
+      data: {
+        email: companyApplicantEmail,
+        passwordHash,
+        firstName: 'Candidata',
+        lastName: 'Empresa',
+        role: UserRole.STUDENT,
+        profile: {
+          create: {
+            university: 'CEI Sevilla',
+            major: 'Desarrollo de Aplicaciones Web',
+            semester: '2º año',
+            phone: '+34 600 111 222',
+            location: 'Sevilla',
+            availability: '6 meses',
+            bio: 'Busco una practica para crecer en datos y producto digital.',
+            skills: ['SQL', 'React', 'Trabajo en equipo'],
+            avatarInitials: 'CE',
+            profileCompletion: 100,
+          },
+        },
+      },
+    });
+
+    const ownApplication = await prisma.application.create({
+      data: {
+        userId: applicant.id,
+        jobId: companyPortalJobId,
+        status: ApplicationStatus.SUBMITTED,
+        coverLetter: 'Me interesa esta practica porque encaja con mi perfil.',
+      },
+    });
+
+    const companyResponse = await request(app)
+      .get('/api/v1/company/applications')
+      .set('Authorization', `Bearer ${companyToken}`)
+      .expect(200);
+
+    const application = companyResponse.body.data.find((item: { id: string }) => item.id === ownApplication.id);
+
+    expect(application).toMatchObject({
+      id: ownApplication.id,
+      coverLetter: 'Me interesa esta practica porque encaja con mi perfil.',
+      user: {
+        email: companyApplicantEmail,
+        firstName: 'Candidata',
+        lastName: 'Empresa',
+        profile: {
+          university: 'CEI Sevilla',
+          major: 'Desarrollo de Aplicaciones Web',
+          phone: '+34 600 111 222',
+          skills: ['SQL', 'React', 'Trabajo en equipo'],
+          profileCompletion: 100,
+        },
+      },
+      job: {
+        slug: companyPortalJobSlug,
+      },
+    });
+
+    expect(companyResponse.body.data.some((item: { id: string }) => item.id === otherApplicationId)).toBe(false);
+
+    const adminResponse = await request(app).get('/api/v1/admin/applications').set('Authorization', `Bearer ${adminToken}`).expect(200);
+    const adminApplication = adminResponse.body.data.find((item: { id: string }) => item.id === ownApplication.id);
+
+    expect(adminApplication.user.profile).toMatchObject({
+      university: 'CEI Sevilla',
+      availability: '6 meses',
+      bio: 'Busco una practica para crecer en datos y producto digital.',
+    });
+  });
+
+  it('permite al admin ocultar una empresa y sus practicas de la parte publica', async () => {
+    await request(app)
+      .patch(`/api/v1/admin/companies/${companyPortalId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: CompanyStatus.HIDDEN })
+      .expect(200);
+
+    const companyResponse = await request(app).get(`/api/v1/companies/${companyPortalId}`).expect(404);
+    const jobResponse = await request(app).get(`/api/v1/jobs/${companyPortalJobSlug}`).expect(404);
+
+    expect(companyResponse.body.error.message).toBe('Company not found');
+    expect(jobResponse.body.error.message).toBe('Job not found');
   });
 });
 

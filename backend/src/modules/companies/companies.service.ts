@@ -1,9 +1,10 @@
-import { JobStatus, Prisma } from '@prisma/client';
+import { CompanyStatus, JobStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { HttpError } from '../../shared/errors/httpError';
 
 type ListCompaniesParams = {
   search?: string;
+  category?: string;
   page: number;
   limit: number;
 };
@@ -73,18 +74,60 @@ function serializeCompanyDetail(company: Prisma.CompanyGetPayload<{ include: typ
   };
 }
 
+function normalizeFilterValue(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function buildCategoryTerms(category: string) {
+  const normalized = normalizeFilterValue(category);
+  const aliases: Record<string, string[]> = {
+    tecnologia: ['Tecnologia', 'Tecnología', 'Tech', 'Software', 'Cloud'],
+    diseno: ['Diseno', 'Diseño', 'UX', 'UI'],
+    marketing: ['Marketing', 'Comunicacion', 'Comunicación'],
+    finanzas: ['Finanzas', 'Finance', 'Fintech'],
+    comunicacion: ['Comunicacion', 'Comunicación', 'Contenido'],
+    'recursos-humanos': ['Recursos Humanos', 'RRHH', 'People'],
+    rrhh: ['Recursos Humanos', 'RRHH', 'People'],
+  };
+
+  return aliases[normalized] || [category];
+}
+
 export async function listCompanies(params: ListCompaniesParams) {
-  const where: Prisma.CompanyWhereInput = {};
+  const andFilters: Prisma.CompanyWhereInput[] = [{ status: CompanyStatus.APPROVED }];
 
   if (params.search) {
-    where.OR = [
-      { name: { contains: params.search, mode: 'insensitive' } },
-      { description: { contains: params.search, mode: 'insensitive' } },
-      { industry: { contains: params.search, mode: 'insensitive' } },
-      { tags: { has: params.search } },
-    ];
+    const search = params.search.trim();
+
+    if (search) {
+      andFilters.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { slug: { contains: normalizeFilterValue(search), mode: 'insensitive' } },
+        ],
+      });
+    }
   }
 
+  if (params.category) {
+    const categoryTerms = buildCategoryTerms(params.category);
+    const industryFilters: Prisma.CompanyWhereInput[] = categoryTerms.map((term) => ({
+      industry: { contains: term, mode: 'insensitive' },
+    }));
+
+    andFilters.push({
+      OR: [
+        ...industryFilters,
+        { tags: { hasSome: categoryTerms } },
+      ],
+    });
+  }
+
+  const where: Prisma.CompanyWhereInput = { AND: andFilters };
   const skip = (params.page - 1) * params.limit;
 
   const [items, total] = await prisma.$transaction([
@@ -112,6 +155,7 @@ export async function listCompanies(params: ListCompaniesParams) {
 export async function getCompanyByIdOrSlug(idOrSlug: string) {
   const company = await prisma.company.findFirst({
     where: {
+      status: CompanyStatus.APPROVED,
       OR: [{ id: idOrSlug }, { slug: idOrSlug }],
     },
     include: companyDetailInclude,

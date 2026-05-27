@@ -6,6 +6,7 @@ export async function getCurrentUser(userId: string) {
     where: { id: userId },
     include: {
       profile: true,
+      company: true,
     },
   });
 

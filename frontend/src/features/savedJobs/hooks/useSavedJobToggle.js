@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getAuthToken } from '@/shared/services/apiClient';
 import { deleteSavedJob, fetchMySavedJobs, saveJob } from '@/features/savedJobs/services/savedJobsApi';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 export function useSavedJobToggle({ onNavigate } = {}) {
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [savedJobIds, setSavedJobIds] = useState([]);
   const [savingJobId, setSavingJobId] = useState(null);
   const [savedJobsError, setSavedJobsError] = useState(null);
+  const hasAuthToken = Boolean(getAuthToken());
+  const canSaveJobs = isLoading ? !hasAuthToken : !isAuthenticated || user?.role === 'STUDENT';
 
   const loadSavedJobIds = useCallback(async () => {
-    if (!getAuthToken()) {
+    if (!getAuthToken() || user?.role !== 'STUDENT') {
       setSavedJobIds([]);
       return;
     }
@@ -19,7 +23,7 @@ export function useSavedJobToggle({ onNavigate } = {}) {
     } catch {
       setSavedJobIds([]);
     }
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     loadSavedJobIds();
@@ -31,6 +35,10 @@ export function useSavedJobToggle({ onNavigate } = {}) {
   }, [loadSavedJobIds]);
 
   const toggleSavedJob = useCallback(async (job) => {
+    if (isAuthenticated && user?.role !== 'STUDENT') {
+      return;
+    }
+
     if (!getAuthToken()) {
       window.sessionStorage.setItem('talentbridge.pendingJob', job.slug || job.id);
       onNavigate?.('login');
@@ -59,9 +67,10 @@ export function useSavedJobToggle({ onNavigate } = {}) {
     } finally {
       setSavingJobId(null);
     }
-  }, [onNavigate, savedJobIds]);
+  }, [isAuthenticated, onNavigate, savedJobIds, user?.role]);
 
   return {
+    canSaveJobs,
     savedJobIds,
     savingJobId,
     savedJobsError,

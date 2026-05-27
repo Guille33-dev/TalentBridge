@@ -11,7 +11,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
 
 const PAGE_SIZE = 10;
-const emptyFilters = { search: '', location: '', modality: '', area: '', company: '', companyName: '' };
+const emptyFilters = { search: '', location: '', modality: '', category: '', company: '', companyName: '' };
 
 function normalizePage(value) {
   const page = Number(value);
@@ -25,7 +25,7 @@ function readSearchState(searchParams) {
       search: searchParams.get('search') || '',
       location: searchParams.get('location') || '',
       modality: searchParams.get('modality') || '',
-      area: searchParams.get('area') || '',
+      category: searchParams.get('category') || searchParams.get('area') || '',
       company: searchParams.get('company') || '',
       companyName: searchParams.get('companyName') || '',
     },
@@ -99,7 +99,7 @@ export function JobSearch({ onNavigate }) {
   const [pagination, setPagination] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
+  const { canSaveJobs, savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
 
   useEffect(() => {
     const nextState = readSearchState(searchParams);
@@ -121,6 +121,7 @@ export function JobSearch({ onNavigate }) {
           search: activeFilters.search,
           location: activeFilters.location,
           modality: activeFilters.modality,
+          category: activeFilters.category,
           company: activeFilters.company,
           page: currentPage,
           limit: PAGE_SIZE,
@@ -169,7 +170,6 @@ export function JobSearch({ onNavigate }) {
     const nextFilters = {
       ...activeFilters,
       [key]: value,
-      search: key === 'area' ? value : activeFilters.search,
     };
 
     updateUrlFilters(nextFilters, 1);
@@ -241,7 +241,7 @@ export function JobSearch({ onNavigate }) {
                   <p className="text-gray-600 text-sm sm:text-base">
                     {activeFilters.companyName
                       ? `Mostrando practicas de ${activeFilters.companyName}`
-                      : activeFilters.search || activeFilters.location || activeFilters.modality
+                      : activeFilters.search || activeFilters.location || activeFilters.modality || activeFilters.category
                         ? 'Mostrando resultados filtrados'
                         : 'Mostrando todos los resultados'}
                   </p>
@@ -258,8 +258,8 @@ export function JobSearch({ onNavigate }) {
                 </div>
               )}
 
-              {(error || savedJobsError) && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4 text-sm">
+              {(error || (canSaveJobs && savedJobsError)) && (
+                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4 text-sm" role="alert">
                   {error || savedJobsError}
                 </div>
               )}
@@ -283,7 +283,8 @@ export function JobSearch({ onNavigate }) {
                         job={job}
                         isSaved={savedJobIds.includes(job.id)}
                         isSaveDisabled={savingJobId === job.id}
-                        onToggleSave={toggleSavedJob}
+                        onToggleSave={canSaveJobs ? toggleSavedJob : undefined}
+                        showSaveButton={canSaveJobs}
                         onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
                       />
                     ))}

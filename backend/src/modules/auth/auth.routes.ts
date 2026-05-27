@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { asyncHandler } from '../../shared/http/asyncHandler';
-import { login, registerStudent } from './auth.service';
+import { login, registerCompany, registerStudent } from './auth.service';
 
 export const authRouter = Router();
 
@@ -22,6 +22,15 @@ authRouter.post(
   authRateLimit,
   asyncHandler(async (req, res) => {
     const result = await registerStudent(req.body);
+    res.status(201).json(result);
+  }),
+);
+
+authRouter.post(
+  '/register-company',
+  authRateLimit,
+  asyncHandler(async (req, res) => {
+    const result = await registerCompany(req.body);
     res.status(201).json(result);
   }),
 );

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/shared/components/layout/Header';
 import { Footer } from '@/shared/components/layout/Footer';
@@ -9,7 +9,15 @@ import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
 
 const PAGE_SIZE = 9;
-const categories = ['Todas', 'Tecnologia', 'Diseno', 'Marketing', 'Finanzas', 'Comunicacion', 'Recursos Humanos'];
+const categories = [
+  { label: 'Todas', value: '' },
+  { label: 'Tecnología', value: 'Tecnología' },
+  { label: 'Diseño', value: 'Diseño' },
+  { label: 'Marketing', value: 'Marketing' },
+  { label: 'Finanzas', value: 'Finanzas' },
+  { label: 'Comunicación', value: 'Comunicación' },
+  { label: 'Recursos Humanos', value: 'Recursos Humanos' },
+];
 
 function normalizePage(value) {
   const page = Number(value);
@@ -19,7 +27,7 @@ function normalizePage(value) {
 function readCompanySearchState(searchParams) {
   return {
     search: searchParams.get('search') || '',
-    category: searchParams.get('category') || 'Todas',
+    category: searchParams.get('category') || '',
     page: normalizePage(searchParams.get('page')),
   };
 }
@@ -28,7 +36,7 @@ function buildCompanySearchParams({ search, category }, page) {
   const params = new URLSearchParams();
 
   if (search) params.set('search', search);
-  if (category && category !== 'Todas') params.set('category', category);
+  if (category) params.set('category', category);
   if (page > 1) params.set('page', String(page));
 
   return params;
@@ -88,12 +96,6 @@ export function CompanyList({ onNavigate }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiSearch = useMemo(() => {
-    if (searchQuery.trim()) return searchQuery.trim();
-    if (selectedCategory !== 'Todas') return selectedCategory;
-    return '';
-  }, [searchQuery, selectedCategory]);
-
   useEffect(() => {
     const nextState = readCompanySearchState(searchParams);
     setSearchQuery(nextState.search);
@@ -110,7 +112,8 @@ export function CompanyList({ onNavigate }) {
 
       try {
         const result = await fetchCompanies({
-          search: apiSearch,
+          search: searchQuery.trim(),
+          category: selectedCategory,
           page: currentPage,
           limit: PAGE_SIZE,
         });
@@ -137,10 +140,15 @@ export function CompanyList({ onNavigate }) {
     return () => {
       ignore = true;
     };
-  }, [apiSearch, currentPage]);
+  }, [searchQuery, selectedCategory, currentPage]);
 
   const updateUrlFilters = (nextSearch, nextCategory, page = 1) => {
     setSearchParams(buildCompanySearchParams({ search: nextSearch.trim(), category: nextCategory }, page));
+  };
+
+  const handleSearchQueryChange = (event) => {
+    setSearchQuery(event.target.value);
+    setCurrentPage(1);
   };
 
   const handleSubmit = (event) => {
@@ -173,9 +181,9 @@ export function CompanyList({ onNavigate }) {
               <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 ml-2 flex-shrink-0" />
               <Input
                 type="text"
-                placeholder="Buscar empresas por nombre o industria..."
+                placeholder="Buscar empresas por nombre..."
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={handleSearchQueryChange}
                 className="border-0 bg-transparent focus-visible:ring-0 text-gray-900 text-sm sm:text-base"
               />
               <Button type="submit" className="hidden sm:inline-flex bg-purple-600 hover:bg-purple-700 text-white">
@@ -189,13 +197,13 @@ export function CompanyList({ onNavigate }) {
           <div className="mb-6 sm:mb-8 flex flex-wrap gap-2 sm:gap-3">
             {categories.map((category) => (
               <button
-                key={category}
-                onClick={() => handleCategoryChange(category)}
+                key={category.label}
+                onClick={() => handleCategoryChange(category.value)}
                 className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors text-sm sm:text-base ${
-                  selectedCategory === category ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                  selectedCategory === category.value ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                 }`}
               >
-                {category}
+                {category.label}
               </button>
             ))}
           </div>
@@ -206,7 +214,7 @@ export function CompanyList({ onNavigate }) {
             </p>
           </div>
 
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4 text-sm">{error}</div>}
+          {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4 text-sm" role="alert">{error}</div>}
 
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">

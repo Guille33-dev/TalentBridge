@@ -14,8 +14,10 @@ import { Home } from '@/features/home/pages/Home';
 import { JobSearch } from '@/features/jobs/pages/JobSearch';
 import { CompanyList } from '@/features/companies/pages/CompanyList';
 import { CompanyDetail } from '@/features/companies/pages/CompanyDetail';
+import { Contact } from '@/features/contact/pages/Contact';
 import { Dashboard } from '@/features/dashboard/pages/Dashboard';
 import { AdminPanel } from '@/features/admin/pages/AdminPanel';
+import { CompanyDashboard } from '@/features/company/pages/CompanyDashboard';
 import { JobDetail } from '@/features/jobs/pages/JobDetail';
 import { Login } from '@/features/auth/pages/Login';
 import { Signup } from '@/features/auth/pages/Signup';
@@ -29,12 +31,15 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 const pageRoutes = {
   [pageKeys.home]: '/',
   [pageKeys.about]: '/sobre-nosotros',
+  [pageKeys.contact]: '/contacto',
   [pageKeys.jobs]: '/practicas',
   [pageKeys.companies]: '/empresas',
   [pageKeys.dashboard]: '/dashboard',
+  [pageKeys.companyDashboard]: '/empresa/dashboard',
   [pageKeys.admin]: '/admin',
   [pageKeys.login]: '/login',
   [pageKeys.signup]: '/registro',
+  [pageKeys.companySignup]: '/registro?tipo=empresa',
   [pageKeys.privacy]: '/privacidad',
   [pageKeys.terms]: '/terminos',
   [pageKeys.cookies]: '/cookies',
@@ -64,13 +69,21 @@ function LoadingScreen() {
 }
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) return <LoadingScreen />;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  if (user?.role === 'COMPANY') {
+    return <Navigate to="/empresa/dashboard" replace />;
+  }
+
+  if (user?.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />;
   }
 
   return children;
@@ -88,6 +101,23 @@ function AdminRoute({ children }) {
 
   if (user?.role !== 'ADMIN') {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+function CompanyRoute({ children }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) return <LoadingScreen />;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  if (user?.role !== 'COMPANY') {
+    return <Navigate to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'} replace />;
   }
 
   return children;
@@ -173,6 +203,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home onNavigate={navigateTo} />} />
         <Route path="/sobre-nosotros" element={<About onNavigate={navigateTo} />} />
+        <Route path="/contacto" element={<Contact onNavigate={navigateTo} />} />
         <Route path="/practicas" element={<JobSearch onNavigate={navigateTo} />} />
         <Route path="/practicas/:jobSlug" element={<JobDetailRoute onNavigate={navigateTo} />} />
         <Route path="/empresas" element={<CompanyList onNavigate={navigateTo} />} />
@@ -193,8 +224,17 @@ function AppRoutes() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/empresa/dashboard"
+          element={
+            <CompanyRoute>
+              <CompanyDashboard onNavigate={navigateTo} />
+            </CompanyRoute>
+          }
+        />
         <Route path="/login" element={<Login onNavigate={navigateTo} onSwitchToSignup={() => navigateTo(pageKeys.signup)} />} />
         <Route path="/registro" element={<Signup onNavigate={navigateTo} onSwitchToLogin={() => navigateTo(pageKeys.login)} />} />
+        <Route path="/registro-empresa" element={<Navigate to="/registro?tipo=empresa" replace />} />
         <Route path="/privacidad" element={<PrivacyPolicy onNavigate={navigateTo} />} />
         <Route path="/terminos" element={<TermsOfService onNavigate={navigateTo} />} />
         <Route path="/cookies" element={<CookiePolicy onNavigate={navigateTo} />} />
@@ -202,6 +242,7 @@ function AppRoutes() {
         <Route path="/jobs/:jobSlug" element={<Navigate to={`/practicas/${location.pathname.split('/').pop()}`} replace />} />
         <Route path="/companies" element={<Navigate to="/empresas" replace />} />
         <Route path="/companies/:companySlug" element={<Navigate to={`/empresas/${location.pathname.split('/').pop()}`} replace />} />
+        <Route path="/contact" element={<Navigate to="/contacto" replace />} />
         <Route path="/signup" element={<Navigate to="/registro" replace />} />
         <Route path="/privacy" element={<Navigate to="/privacidad" replace />} />
         <Route path="/terms" element={<Navigate to="/terminos" replace />} />

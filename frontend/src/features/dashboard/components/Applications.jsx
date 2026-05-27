@@ -121,7 +121,7 @@ export function Applications({ onNavigate }) {
         </p>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{error}</div>}
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm" role="alert">{error}</div>}
 
       <Tabs defaultValue="active" className="w-full">
         <TabsList>
@@ -219,13 +219,13 @@ export function Applications({ onNavigate }) {
 
       {contactApplication && createPortal(
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 px-4" style={{ zIndex: 9999 }}>
-          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white border border-gray-200 shadow-xl p-5 sm:p-6">
+          <div role="dialog" aria-modal="true" aria-labelledby="student-contact-dialog-title" className="w-full max-w-md rounded-xl bg-white border border-gray-200 shadow-xl p-5 sm:p-6">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
                 <MessageCircle className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg mb-1">Contacto con reclutador</h2>
+                <h2 id="student-contact-dialog-title" className="text-lg mb-1">Contacto con reclutador</h2>
                 <p className="text-sm text-gray-600">
                   {contactApplication.job.company.name} revisará tu postulación y contactará contigo desde la plataforma si tu proceso avanza.
                 </p>

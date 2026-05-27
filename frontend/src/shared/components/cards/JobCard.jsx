@@ -3,7 +3,8 @@ import { MapPin, Briefcase, DollarSign, Bookmark } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ImageWithFallback } from '../media/ImageWithFallback';
-export function JobCard({ job, onViewDetails, isSaved = false, onToggleSave, isSaveDisabled = false }) {
+
+export function JobCard({ job, onViewDetails, isSaved = false, onToggleSave, isSaveDisabled = false, showSaveButton = Boolean(onToggleSave) }) {
     const handleViewDetails = () => {
         if (onViewDetails) {
             onViewDetails(job.slug || job.id);
@@ -35,18 +36,20 @@ export function JobCard({ job, onViewDetails, isSaved = false, onToggleSave, isS
         </div>
 
         {/* Save Button */}
-        <button
-          type="button"
-          onClick={handleToggleSave}
-          disabled={isSaveDisabled || !onToggleSave}
-          aria-pressed={isSaved}
-          aria-label={isSaved ? 'Quitar practica guardada' : 'Guardar practica'}
-          className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isSaved
-            ? 'bg-purple-50 text-purple-600'
-            : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
-        >
-          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`}/>
-        </button>
+        {showSaveButton && (
+          <button
+            type="button"
+            onClick={handleToggleSave}
+            disabled={isSaveDisabled || !onToggleSave}
+            aria-pressed={isSaved}
+            aria-label={isSaved ? 'Quitar practica guardada' : 'Guardar practica'}
+            className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isSaved
+              ? 'bg-purple-50 text-purple-600'
+              : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+          >
+            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`}/>
+          </button>
+        )}
       </div>
 
       {/* Meta Information */}

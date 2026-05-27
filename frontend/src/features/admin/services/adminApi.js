@@ -71,3 +71,17 @@ export async function updateAdminApplication(applicationId, payload) {
 
   return result.data;
 }
+
+export async function fetchAdminContactMessages() {
+  const result = await apiRequest('/admin/contact-messages');
+  return result.data || [];
+}
+
+export async function updateAdminContactMessage(messageId, payload) {
+  const result = await apiRequest(`/admin/contact-messages/${messageId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+  return result.data;
+}

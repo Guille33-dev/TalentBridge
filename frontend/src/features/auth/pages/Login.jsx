@@ -8,6 +8,7 @@ import { Checkbox } from '@/shared/components/ui/checkbox';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { pageKeys } from '@/app/config/pageKeys';
 import { BrandLogo } from '@/shared/components/brand/BrandLogo';
+import { Footer } from '@/shared/components/layout/Footer';
 
 export function Login({ onNavigate, onSwitchToSignup }) {
   const location = useLocation();
@@ -35,7 +36,7 @@ export function Login({ onNavigate, onSwitchToSignup }) {
     setError(null);
 
     try {
-      await login({ email, password, rememberMe });
+      const loggedUser = await login({ email, password, rememberMe });
       const pendingJob = window.sessionStorage.getItem('talentbridge.pendingJob');
       const redirectPath = location.state?.from?.pathname;
 
@@ -44,8 +45,12 @@ export function Login({ onNavigate, onSwitchToSignup }) {
         onNavigate(pageKeys.jobDetail, pendingJob);
       } else if (redirectPath) {
         navigate(redirectPath, { replace: true });
+      } else if (loggedUser?.role === 'ADMIN') {
+        onNavigate(pageKeys.admin);
+      } else if (loggedUser?.role === 'COMPANY') {
+        onNavigate(pageKeys.companyDashboard);
       } else {
-        onNavigate('dashboard');
+        onNavigate(pageKeys.dashboard);
       }
     } catch (requestError) {
       setError(requestError.message);
@@ -55,20 +60,21 @@ export function Login({ onNavigate, onSwitchToSignup }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-600 flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        <div className="hidden lg:block text-white">
-          <button onClick={() => onNavigate('home')} className="flex items-center gap-3 mb-8 hover:opacity-90 transition-opacity">
-            <BrandLogo className="w-9 h-9" withSurface />
-            <span className="text-2xl">TalentBridge</span>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex-1 bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-600 flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center">
+        <div className="text-white w-full max-w-2xl mx-auto lg:max-w-none">
+          <button type="button" onClick={() => onNavigate('home')} className="flex items-center gap-3 mb-5 sm:mb-6 lg:mb-8 hover:opacity-90 transition-opacity" aria-label="Ir al inicio de TalentBridge">
+            <BrandLogo className="w-10 h-10 sm:w-12 sm:h-12 lg:w-9 lg:h-9" withSurface />
+            <span className="text-xl sm:text-2xl">TalentBridge</span>
           </button>
 
-          <h1 className="text-4xl sm:text-5xl mb-6">Impulsa tu carrera profesional</h1>
-          <p className="text-lg sm:text-xl text-purple-100 mb-8">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl mb-4 lg:mb-6">Impulsa tu carrera profesional</h1>
+          <p className="text-base sm:text-lg lg:text-xl text-purple-100 mb-6 lg:mb-8">
             Conecta con las mejores empresas y encuentra la practica perfecta para ti.
           </p>
 
-          <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-3 lg:block lg:space-y-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white">+</span>
@@ -101,7 +107,7 @@ export function Login({ onNavigate, onSwitchToSignup }) {
 
         <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 md:p-12">
           <div className="mb-6 sm:mb-8">
-            <button onClick={handleBack} className="flex items-center gap-2 mb-4 sm:mb-6 text-gray-600 hover:text-gray-900">
+            <button type="button" onClick={handleBack} className="flex items-center gap-2 mb-4 sm:mb-6 text-gray-600 hover:text-gray-900">
               <ArrowLeft className="w-5 h-5" />
               <span className="text-sm">Volver</span>
             </button>
@@ -114,7 +120,7 @@ export function Login({ onNavigate, onSwitchToSignup }) {
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm" role="alert">
                 {error}
               </div>
             )}
@@ -128,6 +134,7 @@ export function Login({ onNavigate, onSwitchToSignup }) {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="tu@email.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
@@ -146,13 +153,20 @@ export function Login({ onNavigate, onSwitchToSignup }) {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   placeholder="********"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="pl-10 sm:pl-11 pr-10 sm:pr-11 h-11 sm:h-12 text-sm sm:text-base"
                   required
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showPassword}
+                >
                   {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
               </div>
@@ -177,9 +191,17 @@ export function Login({ onNavigate, onSwitchToSignup }) {
                 Registrate gratis
               </button>
             </p>
+            <p className="text-center text-xs sm:text-sm text-gray-600">
+              Eres una empresa?{' '}
+              <button type="button" onClick={() => onNavigate(pageKeys.companySignup)} className="text-purple-600 hover:text-purple-700">
+                Registrar empresa
+              </button>
+            </p>
           </form>
         </div>
+        </div>
       </div>
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }

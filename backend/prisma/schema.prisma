@@ -14,6 +14,13 @@ enum UserRole {
   ADMIN
 }
 
+enum CompanyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
 enum JobModality {
   REMOTE
   HYBRID
@@ -22,8 +29,22 @@ enum JobModality {
 
 enum JobStatus {
   DRAFT
+  PENDING_REVIEW
   OPEN
   CLOSED
+}
+
+enum JobCategory {
+  DEVELOPMENT
+  DESIGN
+  MARKETING
+  DATA
+  PRODUCT
+  CLOUD_DEVOPS
+  CYBERSECURITY
+  QA
+  CONTENT
+  OPERATIONS
 }
 
 enum ApplicationStatus {
@@ -33,6 +54,13 @@ enum ApplicationStatus {
   ACCEPTED
   REJECTED
   WITHDRAWN
+}
+
+enum ContactMessageStatus {
+  NEW
+  READ
+  RESPONDED
+  ARCHIVED
 }
 
 model User {
@@ -45,6 +73,7 @@ model User {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   profile      StudentProfile?
+  company      Company?
   applications Application[]
   savedJobs    SavedJob[]
 
@@ -73,8 +102,10 @@ model StudentProfile {
 
 model Company {
   id          String   @id @default(uuid())
+  ownerId     String?  @unique
   name        String
   slug        String   @unique
+  status      CompanyStatus @default(APPROVED)
   logo        String?
   banner      String?
   tagline     String?
@@ -84,14 +115,18 @@ model Company {
   size        String?
   website     String?
   industry    String?
+  contactPhone String?
+  taxId       String?  @unique
   foundedYear Int?
   tags        String[] @default([])
   benefits    String[] @default([])
   gallery     String[] @default([])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  owner       User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   jobs        Job[]
 
+  @@index([status])
   @@map("companies")
 }
 
@@ -102,6 +137,7 @@ model Job {
   title               String
   description         String
   overview            String?
+  category            JobCategory   @default(DEVELOPMENT)
   location            String
   modality            JobModality
   duration            String?
@@ -158,4 +194,20 @@ model SavedJob {
   @@unique([userId, jobId])
   @@index([jobId])
   @@map("saved_jobs")
+}
+
+model ContactMessage {
+  id        String               @id @default(uuid())
+  name      String
+  email     String
+  topic     String
+  subject   String
+  message   String
+  status    ContactMessageStatus @default(NEW)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("contact_messages")
 }

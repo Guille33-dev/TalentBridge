@@ -13,7 +13,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
   const [companyData, setCompanyData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
+  const { canSaveJobs, savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
 
   useEffect(() => {
     let ignore = false;
@@ -199,7 +199,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
                     </TabsContent>
 
                     <TabsContent value="jobs" className="space-y-6">
-                      {savedJobsError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{savedJobsError}</div>}
+                      {canSaveJobs && savedJobsError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm" role="alert">{savedJobsError}</div>}
                       {jobs.length > 0 ? (
                         jobs.map((job) => (
                           <JobCard
@@ -207,7 +207,8 @@ export function CompanyDetail({ companyId, onNavigate }) {
                             job={job}
                             isSaved={savedJobIds.includes(job.id)}
                             isSaveDisabled={savingJobId === job.id}
-                            onToggleSave={toggleSavedJob}
+                            onToggleSave={canSaveJobs ? toggleSavedJob : undefined}
+                            showSaveButton={canSaveJobs}
                             onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
                           />
                         ))
@@ -237,7 +238,7 @@ export function CompanyDetail({ companyId, onNavigate }) {
                         <p className="text-sm text-gray-600">No hay practicas abiertas.</p>
                       )}
                     </div>
-                    <Button onClick={() => onNavigate('jobs')} className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white">
+                    <Button onClick={handleViewCompanyJobs} className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white">
                       Ver todas las practicas
                     </Button>
                   </div>

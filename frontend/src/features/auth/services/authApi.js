@@ -9,6 +9,15 @@ export async function registerUser(formData) {
   return result.data;
 }
 
+export async function registerCompanyUser(formData) {
+  const result = await apiRequest('/auth/register-company', {
+    method: 'POST',
+    body: JSON.stringify(formData),
+  });
+
+  return result.data;
+}
+
 export async function loginUser(credentials) {
   const result = await apiRequest('/auth/login', {
     method: 'POST',

@@ -33,7 +33,7 @@ export function DashboardHome({ onNavigate, onViewChange }) {
   const [suggestedCompaniesData, setSuggestedCompaniesData] = useState([]);
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [error, setError] = useState(null);
-  const { savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
+  const { canSaveJobs, savedJobIds, savingJobId, savedJobsError, toggleSavedJob } = useSavedJobToggle({ onNavigate });
 
   useEffect(() => {
     let ignore = false;
@@ -84,7 +84,7 @@ export function DashboardHome({ onNavigate, onViewChange }) {
         <p className="text-gray-600 text-sm sm:text-base">Aquí está el estado de tu búsqueda de prácticas</p>
       </div>
 
-      {(error || savedJobsError) && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">{error || savedJobsError}</div>}
+      {(error || savedJobsError) && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm" role="alert">{error || savedJobsError}</div>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {statCards.map(({ id, label, value, icon: Icon, iconClass, bgClass }) => (
@@ -165,7 +165,8 @@ export function DashboardHome({ onNavigate, onViewChange }) {
               job={job}
               isSaved={savedJobIds.includes(job.id)}
               isSaveDisabled={savingJobId === job.id}
-              onToggleSave={toggleSavedJob}
+              onToggleSave={canSaveJobs ? toggleSavedJob : undefined}
+              showSaveButton={canSaveJobs}
               onViewDetails={(jobId) => onNavigate('job-detail', jobId)}
             />
           ))}

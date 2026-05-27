@@ -1,4 +1,4 @@
-import { ApplicationStatus, JobStatus, Prisma } from '@prisma/client';
+import { ApplicationStatus, CompanyStatus, JobStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { HttpError } from '../../shared/errors/httpError';
 
@@ -73,6 +73,9 @@ export async function createApplication(userId: string, body: CreateApplicationB
     where: {
       OR: [{ id: jobId }, { slug: jobId }],
       status: JobStatus.OPEN,
+      company: {
+        status: CompanyStatus.APPROVED,
+      },
     },
     select: { id: true },
   });

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { clearAuthToken, setAuthToken } from '@/shared/services/apiClient';
-import { fetchCurrentUser, loginUser, registerUser } from '@/features/auth/services/authApi';
+import { fetchCurrentUser, loginUser, registerCompanyUser, registerUser } from '@/features/auth/services/authApi';
 
 const AuthContext = createContext(null);
 
@@ -50,6 +50,13 @@ export function AuthProvider({ children }) {
     return result.user;
   };
 
+  const registerCompany = async (formData) => {
+    const result = await registerCompanyUser(formData);
+    setAuthToken(result.token, true);
+    setUser(result.user);
+    return result.user;
+  };
+
   const logout = () => {
     clearAuthToken();
     setUser(null);
@@ -63,6 +70,7 @@ export function AuthProvider({ children }) {
       login,
       logout,
       register,
+      registerCompany,
     }),
     [user, isLoading],
   );
